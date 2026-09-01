@@ -334,8 +334,9 @@
       .filter(Boolean).filter(function (v, i, a) { return a.indexOf(v) === i; }).sort().reverse();
 
     llenarSelect('fMes', [['todos', 'Todos los meses']].concat(meses.map(function (m) { return [m, nomMes(m)]; })), filtros.mes);
-    llenarSelect('fEstado', [['todos', 'Cualquier resultado'], ['pendiente', 'En juego'], ['ganada', 'Ganadas'],
-      ['perdida', 'Perdidas'], ['cashout', 'Cash out'], ['anulada', 'Anuladas']], filtros.estado);
+    llenarSelect('fEstado', [['todos', 'Cualquier resultado'], ['pendiente', 'Pendientes'],
+      ['ganada', 'Ganadas'], ['perdida', 'Perdidas'], ['cashout', 'Cobro anticipado'],
+      ['anulada', 'Nulas']], filtros.estado);
     var ligasUsadas = todas.map(function (b) { return b.liga; }).filter(Boolean)
       .filter(function (v, i, a) { return a.indexOf(v) === i; });
     llenarSelect('fLiga', [['todas', 'Todas las ligas']].concat(ligasUsadas.map(function (l) {
