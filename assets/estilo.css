@@ -287,7 +287,12 @@ header { padding: calc(18px + env(safe-area-inset-top)) 14px 12px; text-align: c
 .caja-tres .v { font-size: 14px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
 /* ============================ fichas de métrica ============================ */
-.fichas { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 9px; margin-bottom: 12px; }
+.fichas { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 9px; margin-bottom: 12px; }
+/* dentro de una tarjeta hay menos ancho: se fuerzan las tres columnas para
+   que no quede un hueco suelto en la segunda fila */
+.tarjeta .fichas { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.tarjeta .ficha { padding: 9px 8px; }
+.tarjeta .ficha .v { font-size: 18px; }
 .ficha {
   background: var(--papel); color: var(--tinta); border-radius: 11px; padding: 11px 10px;
   box-shadow: var(--sombra);
@@ -396,7 +401,14 @@ section.act { display: block; animation: entra .22s ease-out; }
 .grafico .rejilla { stroke: var(--rejilla); stroke-width: 1; }
 .grafico .eje { stroke: var(--eje); stroke-width: 1; }
 .grafico .etq-dato { font-size: 10px; font-weight: 600; fill: var(--tinta-media); }
-.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+.scroll-x .tabla-datos { min-width: 100%; }
+/* el "no partir" solo vale dentro de una caja que pueda desplazarse; en una
+   tabla normal obligaría a la página entera a scrollear en horizontal */
+.scroll-x .tabla-datos th, .scroll-x .tabla-datos td { white-space: nowrap; }
+.scroll-x .tabla-datos th:first-child,
+.scroll-x .tabla-datos td:first-child { white-space: normal; }
+.tabla-datos { table-layout: auto; }
 
 .leyenda { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 9px; }
 .leyenda span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px;
@@ -405,9 +417,9 @@ section.act { display: block; animation: entra .22s ease-out; }
 
 /* barras horizontales con etiqueta: el formato más legible en celular */
 .barras { display: flex; flex-direction: column; gap: 8px; }
-.barra-fila { display: grid; grid-template-columns: 82px 1fr auto; gap: 8px; align-items: center; }
-.barra-fila .et { font-size: 11.5px; font-weight: 700; color: var(--tinta-media);
-                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-fila { display: grid; grid-template-columns: 94px 1fr auto; gap: 7px; align-items: center; }
+.barra-fila .et { font-size: 11px; font-weight: 700; color: var(--tinta-media);
+                  line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .barra-riel { height: 16px; background: var(--papel-hueco); border-radius: 4px; position: relative;
               overflow: hidden; }
 .barra-riel .rel { position: absolute; top: 0; bottom: 0; border-radius: 4px; }

@@ -273,7 +273,7 @@
      ===================================================================== */
   function tabla(cabeceras, filas, resumen) {
     var s = '<details class="ver-tabla"><summary>' + esc(resumen || 'Ver los números') + '</summary>' +
-            '<table class="tabla-datos"><thead><tr>';
+            '<div class="scroll-x"><table class="tabla-datos"><thead><tr>';
     cabeceras.forEach(function (c) { s += '<th scope="col">' + esc(c) + '</th>'; });
     s += '</tr></thead><tbody>';
     filas.forEach(function (f) {
@@ -281,7 +281,7 @@
       f.forEach(function (c, i) { s += i === 0 ? '<th scope="row">' + esc(c) + '</th>' : '<td>' + esc(c) + '</td>'; });
       s += '</tr>';
     });
-    return s + '</tbody></table></details>';
+    return s + '</tbody></table></div></details>';
   }
 
   function leyenda(items) {

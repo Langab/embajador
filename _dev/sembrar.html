@@ -6,6 +6,7 @@ button{font-size:16px;padding:12px 18px;margin-right:8px;cursor:pointer}pre{back
 </head>
 <body>
 <h1>Sembrar datos de prueba</h1>
+<p style="background:#fee;border-left:4px solid #c00;padding:10px 12px"><b>Cuidado:</b> esta página es solo para probar la app. Sembrar o borrar aquí <b>reemplaza los datos guardados en este navegador</b>. No la abras en el teléfono donde Seba lleva sus apuestas de verdad.</p>
 <p>Solo para desarrollo. Genera un historial verosímil con patrones que el análisis debería
 detectar: peor rendimiento en cuotas altas, combinadas que restan, y cuotas más altas después
 de perder.</p>
@@ -34,6 +35,16 @@ var PARTIDOS = [
   ['superlig', 'Galatasaray', 'Fenerbahçe'], ['champions', 'Real Madrid', 'Manchester City']
 ];
 var MERCADOS = ['resultado', 'resultado', 'resultado', 'totalgoles', 'totalgoles', 'ambos', 'doble', 'hasiatico', 'sinempate', 'corners'];
+/* cada mercado admite solo ciertas selecciones: un "Resultado Final: No" no existe */
+var OPCIONES = {
+  resultado:  function (p) { return [p[1], 'Empate', p[2]]; },
+  totalgoles: function ()  { return ['Más de', 'Menos de']; },
+  ambos:      function ()  { return ['Sí', 'No']; },
+  doble:      function (p) { return [p[1] + ' o empate', p[1] + ' o ' + p[2], p[2] + ' o empate']; },
+  hasiatico:  function (p) { return [p[1], p[2]]; },
+  sinempate:  function (p) { return [p[1], p[2]]; },
+  corners:    function ()  { return ['Más de', 'Menos de']; }
+};
 
 function id(i) { return 'demo' + i.toString(36) + Math.floor(rnd() * 1e6).toString(36); }
 
@@ -85,12 +96,13 @@ function sembrar() {
     var hora = Math.floor(entre(10, 24));
     if (ultimaPerdio && rnd() < 0.22) hora = Math.floor(entre(0, 5));   // madrugada tras perder
 
+    var mercado = elige(MERCADOS);
     var b = {
       id: id(i), fecha: f.toISOString().slice(0, 10),
       hora: String(hora).padStart(2, '0') + ':' + String(Math.floor(rnd() * 60)).padStart(2, '0'),
       deporte: 'futbol', liga: p[0], equipoLocal: p[1], equipoVisita: p[2],
-      mercado: elige(MERCADOS),
-      seleccion: elige([p[1], p[2], 'Empate', 'Más de', 'Menos de', 'Sí', 'No']),
+      mercado: mercado,
+      seleccion: elige(OPCIONES[mercado](p)),
       cuota: cuota, stake: stake, moneda: 'COP', tasaEurCop: 4180,
       tipoBoleto: combi ? 'combinada' : 'simple',
       numSelecciones: combi ? Math.floor(entre(2, 5)) : null,
@@ -123,8 +135,18 @@ function sembrar() {
     '\nRentabilidad: ' + (neto / inv * 100).toFixed(1) + '%';
 }
 
-document.getElementById('sembrar').addEventListener('click', sembrar);
+function hayDatosReales() {
+  try {
+    var a = JSON.parse(localStorage.getItem('emb_apuestas_v1') || '[]');
+    return a.some(function (b) { return String(b.id || '').indexOf('demo') !== 0; });
+  } catch (e) { return false; }
+}
+document.getElementById('sembrar').addEventListener('click', function () {
+  if (hayDatosReales() && !confirm('Hay boletos reales guardados en este navegador.\n\nSembrar datos de prueba los BORRA. ¿Seguro?')) return;
+  sembrar();
+});
 document.getElementById('limpiar').addEventListener('click', function () {
+  if (!confirm('Esto borra TODO lo guardado en este navegador. ¿Seguro?')) return;
   ['emb_apuestas_v1', 'emb_movimientos_v1', 'emb_cfg_v1', 'emb_tasa_v1'].forEach(function (k) {
     localStorage.removeItem(k);
   });

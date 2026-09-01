@@ -283,14 +283,17 @@
       function (b) { return !!b.enVivo; },
       function (a, b) { return 'Rinden ' + C.fmtPct(a.yield) + ' frente a ' + C.fmtPct(b.yield) + ' antes del partido.'; });
 
-    comparar('Cuotas de 3 para arriba',
+    comparar('Cuotas 3+',
       function (b) { return (+b.cuota || 0) > 3; },
       function (a, b) { return 'Rinden ' + C.fmtPct(a.yield) + ' frente a ' + C.fmtPct(b.yield) + ' en cuotas más bajas.'; });
 
-    // el equipo al que más le apuesta
+    /* El equipo al que más le apuesta. Solo cuenta cuando la selección es uno
+       de los dos equipos del partido: en "Ambos Equipos Marcarán" la selección
+       es "Sí" o "No", y tratarla como equipo inventaría un sesgo que no existe. */
     var porEquipo = {};
     boletos.forEach(function (b) {
       if (!b.seleccion) return;
+      if (b.seleccion !== b.equipoLocal && b.seleccion !== b.equipoVisita) return;
       (porEquipo[b.seleccion] = porEquipo[b.seleccion] || []).push(b);
     });
     var fav = Object.keys(porEquipo)
@@ -477,7 +480,7 @@
         dentro ? 'Todavía no se puede separar habilidad de suerte' : (m.yield > 0 ? 'El resultado sobrevive al azar' : 'La pérdida no es mala suerte'),
         dentro
           ? 'El margen de error cruza el cero: con estos datos, el azar explica lo que ves.' +
-            (faltan && faltan > m.n ? ' Para demostrar una rentabilidad de ' + C.fmtPct(m.yield) + ' a cuota ' + C.fmtCuota(m.cuotaMedia) + ' harían falta unos ' + faltan.toLocaleString('es-CO') + ' boletos.' : '')
+            (faltan && faltan > m.n ? ' Jugando a cuotas de ' + C.fmtCuota(m.cuotaMedia) + ' de media, harían falta unos ' + faltan.toLocaleString('es-CO') + ' boletos para que un resultado de este tamaño dejara de ser explicable por azar. Llevas ' + m.n + '.' : '')
           : 'El margen de error completo queda del mismo lado del cero.');
     }
     return tarjeta('El veredicto', cuerpo,
@@ -533,7 +536,7 @@
       };
     }), { fmt: function (v) { return v === 0 ? '—' : C.fmtPct(v, 0); } });
 
-    cuerpo += G.tabla(['Cuota', 'Boletos', 'Apostado', 'Resultado', 'Rentab.'],
+    cuerpo += G.tabla(['Cuota', 'N.º', 'Apostado', 'Result.', 'Rent.'],
       cubos.map(function (c) {
         return [c.clave, String(c.n), C.fmtCOP(c.turnover, true), C.fmtCOPsigno(c.neto, true), celdaYield(c)];
       }), 'Ver la tabla por cuota');
@@ -564,16 +567,17 @@
     var prev = res.filter(function (b) { return !b.enVivo; });
     var vivo = res.filter(function (b) { return b.enVivo; });
     var filas = [];
-    [['Simples', simples], ['Combinadas', combis], ['Antes del partido', prev], ['En vivo', vivo]]
+    [['Simples', simples], ['Combinadas', combis], ['Prepartido', prev], ['En vivo', vivo]]
       .forEach(function (par) {
         var m = resumen(par[1]);
         if (m.n) filas.push([par[0], String(m.n), C.fmtCOP(m.turnover, true), C.fmtCOPsigno(m.neto, true), celdaYield(m)]);
       });
     if (filas.length < 2) return '';
-    var cuerpo = '<table class="tabla-datos"><thead><tr><th>Formato</th><th>Boletos</th><th>Apostado</th><th>Resultado</th><th>Rentab.</th></tr></thead><tbody>' +
+    var cuerpo = '<div class="scroll-x"><table class="tabla-datos"><thead><tr><th>Formato</th>' +
+      '<th>N.º</th><th>Apostado</th><th>Result.</th><th>Rent.</th></tr></thead><tbody>' +
       filas.map(function (f) {
         return '<tr><th scope="row">' + esc(f[0]) + '</th>' + f.slice(1).map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>';
-      }).join('') + '</tbody></table>';
+      }).join('') + '</tbody></table></div>';
 
     var mS = resumen(simples), mC = resumen(combis);
     if (mS.n >= MIN_MOSTRAR && mC.n >= MIN_MOSTRAR && mC.yield < mS.yield - 3) {
@@ -599,7 +603,7 @@
              C.fmtCOPsigno(c.neto) + (c.n >= MIN_MOSTRAR ? '<br>Rentabilidad ' + C.fmtPct(c.yield) : '<br>Pocos datos')
       };
     }), { fmt: function (v) { return C.fmtCOP(v, true); } });
-    cuerpo += G.tabla([titulo.replace('Por ', ''), 'Boletos', 'Apostado', 'Resultado', 'Rentab.'],
+    cuerpo += G.tabla([titulo.replace('Por ', ''), 'N.º', 'Apostado', 'Result.', 'Rent.'],
       cortes.map(function (c) {
         return [nombre(c.clave), String(c.n), C.fmtCOP(c.turnover, true), C.fmtCOPsigno(c.neto, true), celdaYield(c)];
       }), 'Ver la tabla');
@@ -699,7 +703,7 @@
       };
     });
     var cuerpo = G.barrasDivergentes(datos, { fmt: function (v, corto) { return C.fmtCOP(v, corto); } });
-    cuerpo += G.tabla(['Mes', 'Boletos', 'Apostado', 'Resultado'],
+    cuerpo += G.tabla(['Mes', 'N.º', 'Apostado', 'Result.'],
       claves.slice(-12).map(function (k) {
         var m = resumen(porMes[k]);
         return [global.APP.nomMes(k), String(m.n), C.fmtCOP(m.turnover, true), C.fmtCOPsigno(m.neto, true)];
