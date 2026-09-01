@@ -147,10 +147,13 @@ lo sorprenda un retiro bloqueado.
 La carpeta es el repositorio. Al tocar algo:
 
 ```bash
-git add -A && git commit -m "qué cambió" && git push
+./_sistema/publicar.sh "qué cambió"
 ```
 
-GitHub Pages republica solo en un minuto.
+Ese script sube los cambios **y le cambia el número de versión a los archivos**
+(`app.js?v=12`). Eso último importa: sin él, el teléfono que ya abrió la app se queda
+con la copia vieja guardada en caché y no ve los cambios. GitHub Pages republica solo
+en un minuto.
 
 ## Diseño
 
