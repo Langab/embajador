@@ -16,10 +16,13 @@
   var form = document.getElementById('formBoleto');
   var formMov = document.getElementById('formMov');
 
+  /* Los mismos nombres que muestra BetPlay en "Mis Apuestas". Las parciales
+     aparecen con hándicap asiático de cuarto (−1,75), donde la apuesta se
+     parte en dos mitades y una se reintegra. */
   var ESTADOS = [
-    ['pendiente', 'En juego'], ['ganada', 'Ganada'], ['perdida', 'Perdida'],
-    ['cashout', 'Cash out'], ['anulada', 'Anulada'],
-    ['media_ganada', 'Media ganada'], ['media_perdida', 'Media perdida']
+    ['pendiente', 'Pendiente'], ['ganada', 'Ganada'], ['perdida', 'Perdida'],
+    ['cashout', 'Cobro anticipado'], ['anulada', 'Nula'],
+    ['media_ganada', 'Ganada parcial'], ['media_perdida', 'Perdida parcial']
   ];
 
   /* ====================== abrir y cerrar ====================== */
@@ -114,15 +117,16 @@
 
     /* --- formato del boleto --- */
     s += campo('Formato', '<div class="segmentos" role="group" aria-label="Formato del boleto">' +
-      botonSeg('tipoBoleto', 'simple', 'Simple', (b.tipoBoleto || 'simple') === 'simple') +
+      botonSeg('tipoBoleto', 'simple', 'Sencilla', (b.tipoBoleto || 'simple') === 'simple') +
       botonSeg('tipoBoleto', 'combinada', 'Combinada', b.tipoBoleto === 'combinada') +
       botonSeg('tipoBoleto', 'sistema', 'Sistema', b.tipoBoleto === 'sistema') +
     '</div>');
 
     if (b.tipoBoleto && b.tipoBoleto !== 'simple') {
       s += campo('Cuántas selecciones tiene',
-        '<input type="number" name="numSelecciones" min="2" max="30" step="1" inputmode="numeric" ' +
-        'placeholder="3" value="' + esc(b.numSelecciones == null ? '' : b.numSelecciones) + '">');
+        '<input type="number" name="numSelecciones" min="2" max="12" step="1" inputmode="numeric" ' +
+        'placeholder="3" value="' + esc(b.numSelecciones == null ? '' : b.numSelecciones) + '">' +
+        '<div class="ayuda">BetPlay admite hasta 12 selecciones por cupón.</div>');
     }
 
     s += '<div class="segmentos" style="margin-bottom:12px" role="group" aria-label="Condiciones del boleto">' +
@@ -140,7 +144,9 @@
       s += campo('Cuánto te pagó BetPlay',
         '<input type="number" name="retorno" step="any" inputmode="decimal" placeholder="0" ' +
         'value="' + esc(b.retorno == null ? '' : b.retorno) + '">' +
-        '<div class="ayuda">El total que recibiste al retirar, no la ganancia.</div>');
+        '<div class="ayuda">El total que recibiste al cobrar, no la ganancia.' +
+        (b.freebet ? ' Ojo: BetPlay no deja cobrar por anticipado una apuesta gratuita.' : '') +
+        '</div>');
     }
 
     s += campo('Notas (opcional)', '<textarea name="notas" placeholder="por qué la elegiste, cómo se dio el partido…">' +

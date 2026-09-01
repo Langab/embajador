@@ -67,13 +67,20 @@
     var neto = suma(res.map(C.ganancia));
     var n = res.length;
 
-    var ganadas = res.filter(function (b) {
-      return b.resultado === 'ganada' || b.resultado === 'media_ganada';
-    }).length;
+    /* Un boleto acertó si devolvió más de lo que costó. Así quedan bien
+       clasificadas las parciales del hándicap asiático y los cobros
+       anticipados, que no son ni ganada ni perdida limpia. */
+    var acerto = function (b) { return C.retorno(b) > C.invertido(b); };
+    var ganadas = res.filter(acerto).length;
 
-    // umbral de empate ponderado por lo invertido (media armónica)
+    /* El umbral de empate se pondera por lo invertido, no promediando cuotas:
+       lo que importa es dónde está la plata. Y la tasa de acierto se pondera
+       igual, para que las dos cifras sean comparables entre sí. */
     var umbral = turnover > 0
       ? suma(res.map(function (b) { return C.invertido(b) * C.probImplicita(b.cuota); })) / turnover
+      : 0;
+    var aciertoPond = turnover > 0
+      ? suma(res.map(function (b) { return acerto(b) ? C.invertido(b) : 0; })) / turnover
       : 0;
 
     // retornos por peso apostado: la base del test de significancia
@@ -88,8 +95,9 @@
       neto: neto,
       yield: turnover > 0 ? neto / turnover * 100 : 0,
       tasaAcierto: n ? ganadas / n : 0,
+      tasaAciertoPond: aciertoPond,
       umbralEmpate: umbral,
-      ventaja: n ? (ganadas / n - umbral) * 100 : 0,
+      ventaja: (aciertoPond - umbral) * 100,
       cuotaMedia: n ? media(res.map(function (b) { return +b.cuota || 0; })) : 0,
       cuotaPonderada: turnover > 0
         ? suma(res.map(function (b) { return (+b.cuota || 0) * C.invertido(b); })) / turnover : 0,
@@ -336,15 +344,32 @@
       } else if (m.yield > 0 && !dentroDelAzar) {
         out.push(aviso('bien', '📈', 'Rendimiento por encima del azar',
           'Rentabilidad ' + C.fmtPct(m.yield) + ' con ' + m.n + ' boletos. El margen de error se mantiene positivo.'));
+      } else if (m.yield < 0) {
+        out.push(aviso('ojo', '📉', 'Vas perdiendo, aunque todavía podría ser mala suerte',
+          'Rentabilidad ' + C.fmtPct(m.yield) + ' sobre ' + C.fmtCOP(m.turnover) + ' apostados. ' +
+          'El margen de error va de ' + C.fmtPct(m.ic95[0]) + ' a ' + C.fmtPct(m.ic95[1]) +
+          ', y como cruza el cero, con ' + m.n + ' boletos aún no se puede afirmar que el problema sea tu juego.'));
       }
 
-      // acierto contra el umbral que necesitaba
-      var falta = m.tasaAcierto - m.umbralEmpate;
-      out.push(aviso(falta >= 0 ? 'bien' : 'ojo', '🎯',
-        'Aciertas el ' + Math.round(m.tasaAcierto * 100) + '% y necesitas ' + Math.round(m.umbralEmpate * 100) + '%',
-        falta >= 0
-          ? 'Vas ' + Math.abs(falta * 100).toFixed(1) + ' puntos por encima del umbral que exigen tus cuotas.'
-          : 'Te faltan ' + Math.abs(falta * 100).toFixed(1) + ' puntos para empatar con las cuotas a las que juegas.'));
+      /* Acierto contra el umbral que exigen sus cuotas. Ambas cifras van
+         ponderadas por lo invertido, que es lo único que las hace
+         comparables cuando no siempre apuesta lo mismo. */
+      var falta = m.tasaAciertoPond - m.umbralEmpate;
+      var pts = function (x) { return Math.abs(x * 100).toFixed(1).replace('.', ','); };
+      if (falta >= 0 && m.yield < 0) {
+        // acierta lo suficiente y aun así pierde: gana las baratas, pierde las caras
+        out.push(aviso('ojo', '⚖️',
+          'Aciertas lo suficiente y aun así pierdes plata',
+          'Acertaste el ' + Math.round(m.tasaAciertoPond * 100) + '% de lo apostado y te bastaba el ' +
+          Math.round(m.umbralEmpate * 100) + '%, pero la rentabilidad es ' + C.fmtPct(m.yield) +
+          '. Eso pasa cuando los boletos que ganas son los baratos y los que pierdes, los caros.'));
+      } else {
+        out.push(aviso(falta >= 0 ? 'bien' : 'ojo', '🎯',
+          'Aciertas el ' + Math.round(m.tasaAciertoPond * 100) + '% y necesitas ' + Math.round(m.umbralEmpate * 100) + '%',
+          falta >= 0
+            ? 'Vas ' + pts(falta) + ' puntos por encima del umbral que exigen tus cuotas.'
+            : 'Te faltan ' + pts(falta) + ' puntos para empatar con las cuotas a las que juegas.'));
+      }
     } else if (m.n > 0) {
       out.push(aviso('dato', '🧮', 'Todavía son pocos boletos',
         'Con ' + m.n + ' resuelto' + (m.n === 1 ? '' : 's') + ' cualquier número es ruido. ' +
@@ -442,8 +467,9 @@
     if (m.n >= MIN_MOSTRAR) {
       cuerpo += '<table class="tabla-datos">' +
         '<tr><th scope="row">Margen de error (95%)</th><td>' + C.fmtPct(m.ic95[0]) + ' a ' + C.fmtPct(m.ic95[1]) + '</td></tr>' +
-        '<tr><th scope="row">Aciertas</th><td>' + Math.round(m.tasaAcierto * 100) + '%</td></tr>' +
-        '<tr><th scope="row">Necesitas acertar</th><td>' + Math.round(m.umbralEmpate * 100) + '%</td></tr>' +
+        '<tr><th scope="row">Boletos acertados</th><td>' + Math.round(m.tasaAcierto * 100) + '%</td></tr>' +
+        '<tr><th scope="row">Acierto sobre lo apostado</th><td>' + Math.round(m.tasaAciertoPond * 100) + '%</td></tr>' +
+        '<tr><th scope="row">Umbral para empatar</th><td>' + Math.round(m.umbralEmpate * 100) + '%</td></tr>' +
         '<tr><th scope="row">Cuota media</th><td>' + C.fmtCuota(m.cuotaMedia) + '</td></tr>' +
         '<tr><th scope="row">Inversión media</th><td>' + C.fmtCOP(m.stakeMedio) + '</td></tr>' +
         '</table>';

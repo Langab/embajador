@@ -160,9 +160,12 @@
   }
 
   /* ====================== el boleto dibujado ====================== */
+  /* Los nombres son los que usa BetPlay en "Mis Apuestas". Las parciales
+     salen del hándicap asiático, que parte la apuesta en dos mitades. */
   var NOMBRE_ESTADO = {
-    ganada: 'Ganada', perdida: 'Perdida', anulada: 'Anulada', cashout: 'Cash out',
-    media_ganada: 'Media ganada', media_perdida: 'Media perdida', pendiente: 'En juego'
+    ganada: 'Ganada', perdida: 'Perdida', anulada: 'Nula',
+    cashout: 'Cobro anticipado', media_ganada: 'Ganada parcial',
+    media_perdida: 'Perdida parcial', pendiente: 'Pendiente'
   };
 
   function boletoHTML(b) {
@@ -175,7 +178,7 @@
     var s = '<article class="boleto tocable" data-boleto="' + esc(b.id) + '" tabindex="0" role="button" ' +
             'aria-label="' + esc((b.equipoLocal || 'Boleto') + ' contra ' + (b.equipoVisita || '') + ', ' + (NOMBRE_ESTADO[b.resultado] || '')) + '">';
     s += '<div class="boleto-cuerpo">';
-    s += '<span class="sello ' + esc(b.resultado || 'pendiente') + '">' + esc(NOMBRE_ESTADO[b.resultado] || 'En juego') + '</span>';
+    s += '<span class="sello ' + esc(b.resultado || 'pendiente') + '">' + esc(NOMBRE_ESTADO[b.resultado] || 'Pendiente') + '</span>';
 
     // fecha, liga y etiquetas
     s += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px;padding-right:88px">';
@@ -223,7 +226,7 @@
     s += '<div class="perfo"></div>';
     s += '<div class="boleto-pie"><div class="resultado-plata">';
     if (pend) {
-      s += '<span class="plata cero">En juego</span>' +
+      s += '<span class="plata cero">Pendiente</span>' +
            '<span class="plata-eur">' + C.fmtEUR(C.copAEur(b.stake, b.tasaEurCop)) + ' en riesgo</span>';
     } else {
       s += '<span class="plata ' + (g > 0 ? 'pos' : g < 0 ? 'neg' : 'cero') + '">' + C.fmtCOPsigno(g) + '</span>' +
@@ -280,7 +283,8 @@
     var m = window.ANALISIS.resumen(res);
     document.getElementById('fichasHoy').innerHTML =
       ficha('Rentabilidad', C.fmtPct(m.yield), m.n + ' boletos resueltos', m.yield > 0 ? 'pos' : m.yield < 0 ? 'neg' : '') +
-      ficha('Acierto', m.n ? Math.round(m.tasaAcierto * 100) + '%' : '—', 'necesita ' + (m.cuotaMedia ? Math.round(100 / m.cuotaMedia) + '%' : '—') + ' para empatar') +
+      ficha('Acierto', m.n ? Math.round(m.tasaAcierto * 100) + '%' : '—',
+        m.n ? 'de tus ' + m.n + ' boletos' : 'sin boletos resueltos') +
       ficha('Cuota media', C.fmtCuota(m.cuotaMedia), 'invertido ' + C.fmtCOP(m.turnover, true));
 
     // avisos accionables
@@ -434,6 +438,33 @@
           : 'Depositaste ' + C.fmtCOP(dep) + ' y retiraste ' + C.fmtCOP(ret) + '. Eso es lo que cuenta.') +
         '</span></div>' +
     '</div>';
+
+    /* --- la retención colombiana sobre los retiros grandes --- */
+    var anio = +hoyISO().slice(0, 4);
+    var umbral = C.umbralRetencion(anio);
+    var retenido = 0, retGrandes = 0;
+    vivosMov().forEach(function (m) {
+      if (m.tipo !== 'retiro') return;
+      var r = C.retencionDe(m.monto, m.fecha);
+      if (r > 0) { retenido += r; retGrandes++; }
+    });
+    s += '<div class="tarjeta">' +
+      '<div class="tarjeta-titulo">Retención en la fuente</div>' +
+      '<div style="font-size:13px;line-height:1.5;color:var(--tinta-media)">' +
+        'En Colombia los premios de juegos de azar pagan <b>20%</b> de retención cuando el ' +
+        'pago supera <b>48 UVT</b>, que en ' + anio + ' son <b>' + C.fmtCOP(umbral) + '</b>. ' +
+        'BetPlay lo avisa en la pantalla de retiro.</div>';
+    if (retGrandes) {
+      s += '<div class="aviso ojo" style="margin-top:10px"><span class="ico">🧾</span><span>' +
+        '<strong>' + retGrandes + ' retiro' + (retGrandes === 1 ? '' : 's') + ' por encima del umbral</strong>' +
+        'Retención estimada: ' + C.fmtCOP(retenido) + ' (' + C.fmtEUR(C.copAEur(retenido)) + '). ' +
+        'Sacar la plata en varios retiros por debajo del umbral evita la retención.</span></div>';
+    } else {
+      s += '<div class="ayuda" style="margin-top:8px">Ninguno de tus retiros ha superado el umbral, ' +
+        'así que no deberías haber tenido retención.</div>';
+    }
+    s += '<div class="ayuda" style="margin-top:8px">Esto es el impuesto colombiano. Lo que tengas que ' +
+      'declarar en Malta por residir allá es harina de otro costal.</div></div>';
 
     /* --- movimientos --- */
     s += '<div class="tarjeta">' +

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Sembrar datos de prueba</title>
+<style>body{font-family:system-ui;max-width:640px;margin:40px auto;padding:0 20px;line-height:1.5}
+button{font-size:16px;padding:12px 18px;margin-right:8px;cursor:pointer}pre{background:#eee;padding:12px;overflow:auto;font-size:12px}</style>
+</head>
+<body>
+<h1>Sembrar datos de prueba</h1>
+<p>Solo para desarrollo. Genera un historial verosímil con patrones que el análisis debería
+detectar: peor rendimiento en cuotas altas, combinadas que restan, y cuotas más altas después
+de perder.</p>
+<button id="sembrar">Sembrar 140 boletos</button>
+<button id="limpiar">Borrar todo</button>
+<button id="abrir">Abrir la app</button>
+<pre id="salida"></pre>
+
+<script>
+/* generador determinista, para que dos corridas den lo mismo */
+var semilla = 20260901;
+function rnd() { semilla = (semilla * 1103515245 + 12345) & 0x7fffffff; return semilla / 0x7fffffff; }
+function elige(a) { return a[Math.floor(rnd() * a.length)]; }
+function entre(a, b) { return a + rnd() * (b - a); }
+
+var PARTIDOS = [
+  ['premier', 'Manchester City', 'Liverpool'], ['premier', 'Arsenal', 'Chelsea'],
+  ['premier', 'Manchester United', 'Tottenham'], ['premier', 'Liverpool', 'Arsenal'],
+  ['laliga', 'Real Madrid', 'Barcelona'], ['laliga', 'Atlético Madrid', 'Sevilla'],
+  ['laliga', 'Barcelona', 'Sevilla'], ['seriea', 'Inter', 'Milan'],
+  ['seriea', 'Juventus', 'Napoli'], ['bundesliga', 'Bayern München', 'Borussia Dortmund'],
+  ['bundesliga', 'Bayer Leverkusen', 'Bayern München'], ['ligue1', 'Paris Saint-Germain', 'Marsella'],
+  ['betplay', 'Millonarios', 'Atlético Nacional'], ['betplay', 'América de Cali', 'Junior'],
+  ['betplay', 'Millonarios', 'Junior'], ['betplay', 'Atlético Nacional', 'Millonarios'],
+  ['argentina', 'Boca Juniors', 'River Plate'], ['brasileirao', 'Flamengo', 'Palmeiras'],
+  ['superlig', 'Galatasaray', 'Fenerbahçe'], ['champions', 'Real Madrid', 'Manchester City']
+];
+var MERCADOS = ['resultado', 'resultado', 'resultado', 'totalgoles', 'totalgoles', 'ambos', 'doble', 'hasiatico', 'sinempate', 'corners'];
+
+function id(i) { return 'demo' + i.toString(36) + Math.floor(rnd() * 1e6).toString(36); }
+
+function sembrar() {
+  var apuestas = [], movimientos = [];
+  var hoy = new Date();
+  var inicio = new Date(hoy.getTime() - 190 * 864e5);
+
+  // depósitos y un par de retiros
+  [[0, 'deposito', 400000, 'Nequi'], [22, 'deposito', 300000, 'Nequi'],
+   [58, 'retiro', 250000, 'Nequi'], [74, 'deposito', 500000, 'PSE'],
+   [119, 'deposito', 400000, 'Nequi'], [142, 'retiro', 300000, 'Bancolombia'],
+   [168, 'deposito', 350000, 'Nequi']].forEach(function (m, i) {
+    var f = new Date(inicio.getTime() + m[0] * 864e5);
+    movimientos.push({
+      id: id(1000 + i), fecha: f.toISOString().slice(0, 10), tipo: m[1],
+      monto: m[2], moneda: 'COP', tasaEurCop: 4180, metodo: m[3],
+      updatedAt: f.toISOString()
+    });
+  });
+
+  var ultimaPerdio = false;
+  for (var i = 0; i < 140; i++) {
+    var dias = Math.floor(i / 140 * 188) + Math.floor(rnd() * 2);
+    var f = new Date(inicio.getTime() + dias * 864e5);
+    var p = elige(PARTIDOS);
+    var combi = rnd() < 0.24;
+    var vivo = rnd() < (ultimaPerdio ? 0.34 : 0.14);   // se va al en vivo tras perder
+
+    // tras perder busca cuotas más altas: el patrón que el análisis debe encontrar
+    var base = ultimaPerdio ? entre(1.9, 4.4) : entre(1.45, 2.9);
+    var cuota = combi ? base * entre(1.8, 3.4) : base;
+    cuota = Math.round(cuota * 100) / 100;
+
+    var stakeBase = ultimaPerdio ? entre(28000, 70000) : entre(18000, 45000);
+    var stake = Math.round(stakeBase / 1000) * 1000;
+
+    // probabilidad real algo peor que la implícita, y bastante peor en cuotas altas
+    var castigo = cuota > 3 ? 0.80 : cuota > 2 ? 0.93 : 1.00;
+    if (combi) castigo *= 0.90;
+    if (vivo) castigo *= 0.94;
+    var gana = rnd() < (1 / cuota) * castigo;
+
+    var resultado = gana ? 'ganada' : 'perdida';
+    var r = rnd();
+    if (r < 0.035) resultado = 'anulada';
+    else if (r < 0.075 && !gana) resultado = 'cashout';
+
+    var hora = Math.floor(entre(10, 24));
+    if (ultimaPerdio && rnd() < 0.22) hora = Math.floor(entre(0, 5));   // madrugada tras perder
+
+    var b = {
+      id: id(i), fecha: f.toISOString().slice(0, 10),
+      hora: String(hora).padStart(2, '0') + ':' + String(Math.floor(rnd() * 60)).padStart(2, '0'),
+      deporte: 'futbol', liga: p[0], equipoLocal: p[1], equipoVisita: p[2],
+      mercado: elige(MERCADOS),
+      seleccion: elige([p[1], p[2], 'Empate', 'Más de', 'Menos de', 'Sí', 'No']),
+      cuota: cuota, stake: stake, moneda: 'COP', tasaEurCop: 4180,
+      tipoBoleto: combi ? 'combinada' : 'simple',
+      numSelecciones: combi ? Math.floor(entre(2, 5)) : null,
+      enVivo: vivo, freebet: rnd() < 0.03,
+      resultado: resultado,
+      retorno: resultado === 'cashout' ? Math.round(stake * entre(0.35, 0.85)) : null,
+      updatedAt: f.toISOString()
+    };
+    if (i > 132) { b.resultado = 'pendiente'; b.retorno = null; }   // algunos en juego
+    apuestas.push(b);
+    ultimaPerdio = resultado === 'perdida';
+  }
+
+  localStorage.setItem('emb_apuestas_v1', JSON.stringify(apuestas));
+  localStorage.setItem('emb_movimientos_v1', JSON.stringify(movimientos));
+  localStorage.setItem('emb_tasa_v1', JSON.stringify({ v: 4180, cuando: new Date().toISOString(), origen: 'demo' }));
+
+  var res = apuestas.filter(function (b) { return b.resultado !== 'pendiente' && b.resultado !== 'anulada'; });
+  var inv = res.reduce(function (s, b) { return s + (b.freebet ? 0 : b.stake); }, 0);
+  var neto = res.reduce(function (s, b) {
+    if (b.resultado === 'ganada') return s + b.stake * (b.cuota - 1);
+    if (b.resultado === 'perdida') return s - b.stake;
+    if (b.resultado === 'cashout') return s + b.retorno - b.stake;
+    return s;
+  }, 0);
+  document.getElementById('salida').textContent =
+    apuestas.length + ' boletos y ' + movimientos.length + ' movimientos.\n' +
+    'Resueltos: ' + res.length + '\nApostado: $' + Math.round(inv).toLocaleString('es-CO') +
+    '\nResultado: $' + Math.round(neto).toLocaleString('es-CO') +
+    '\nRentabilidad: ' + (neto / inv * 100).toFixed(1) + '%';
+}
+
+document.getElementById('sembrar').addEventListener('click', sembrar);
+document.getElementById('limpiar').addEventListener('click', function () {
+  ['emb_apuestas_v1', 'emb_movimientos_v1', 'emb_cfg_v1', 'emb_tasa_v1'].forEach(function (k) {
+    localStorage.removeItem(k);
+  });
+  document.getElementById('salida').textContent = 'Borrado.';
+});
+document.getElementById('abrir').addEventListener('click', function () { location.href = '../index.html'; });
+</script>
+</body>
+</html>

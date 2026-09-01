@@ -46,67 +46,92 @@
   };
 
   /* ====================== tipos de apuesta ======================
-     `opciones` arma los botones de "a qué le apostaste". Los comodines
-     @local y @visita se reemplazan por los nombres reales de los equipos.
-     `linea` marca los mercados que necesitan un número (2.5 goles, −1 de
-     hándicap) para quedar bien anotados. */
+     Los nombres son los que BetPlay muestra en pantalla, tal cual. La
+     plataforma corre sobre Kambi, así que "Resultado Final" no es "1X2",
+     los córners son "Tiros de Esquina" y el marcador exacto es "Resultado
+     Correcto": anotar un boleto es copiar lo que dice la app, sin traducir.
+
+     `opciones` arma los botones de "a qué le apostaste"; @local y @visita se
+     reemplazan por los nombres reales de los equipos. `linea` marca los
+     mercados que necesitan un número (2,5 goles; −1 de hándicap). */
   var MERCADOS = [
-    /* --- los principales --- */
-    { k: '1x2',        n: 'Resultado del partido (1X2)', grupo: 'Principales', deporte: 'futbol',
+    /* --- los que más se juegan --- */
+    { k: 'resultado',  n: 'Resultado Final', grupo: 'Principales', deporte: 'futbol',
       opciones: ['@local', 'Empate', '@visita'] },
-    { k: 'doble',      n: 'Doble oportunidad',           grupo: 'Principales', deporte: 'futbol',
+    { k: 'doble',      n: 'Doble Oportunidad', grupo: 'Principales', deporte: 'futbol',
       opciones: ['@localOempate', '@localOvisita', '@visitaOempate'] },
-    { k: 'dnb',        n: 'Empate no válido',            grupo: 'Principales', deporte: 'futbol',
+    { k: 'sinempate',  n: 'Apuesta sin empate', grupo: 'Principales', deporte: 'futbol',
       opciones: ['@local', '@visita'] },
-    { k: 'ambos',      n: 'Ambos equipos marcan',        grupo: 'Principales', deporte: 'futbol',
+    { k: 'ambos',      n: 'Ambos Equipos Marcarán', grupo: 'Principales', deporte: 'futbol',
       opciones: ['Sí', 'No'] },
-    { k: 'totalgoles', n: 'Más / Menos goles',           grupo: 'Principales', deporte: 'futbol',
+    { k: 'totalgoles', n: 'Total de goles', grupo: 'Principales', deporte: 'futbol',
       opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea de goles', ejemploLinea: '2.5' },
+    { k: 'correcto',   n: 'Resultado Correcto', grupo: 'Principales', deporte: 'futbol' },
 
     /* --- hándicaps --- */
-    { k: 'hasiatico',  n: 'Hándicap asiático',           grupo: 'Hándicaps', deporte: 'futbol',
+    { k: 'hasiatico',  n: 'Hándicap Asiático', grupo: 'Hándicaps', deporte: 'futbol',
       opciones: ['@local', '@visita'], linea: true, etiquetaLinea: 'Hándicap', ejemploLinea: '-0.5' },
-    { k: 'heuropeo',   n: 'Hándicap europeo',            grupo: 'Hándicaps', deporte: 'futbol',
+    { k: 'h3way',      n: 'Hándicap 3-Way', grupo: 'Hándicaps', deporte: 'futbol',
       opciones: ['@local', 'Empate', '@visita'], linea: true, etiquetaLinea: 'Hándicap', ejemploLinea: '-1' },
-    { k: 'totalasia',  n: 'Más / Menos asiático',        grupo: 'Hándicaps', deporte: 'futbol',
+    { k: 'handicap',   n: 'Hándicap', grupo: 'Hándicaps', deporte: 'futbol',
+      opciones: ['@local', '@visita'], linea: true, etiquetaLinea: 'Hándicap', ejemploLinea: '-1' },
+    { k: 'totalasia',  n: 'Total asiático', grupo: 'Hándicaps', deporte: 'futbol',
       opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '2.25' },
 
-    /* --- mitades --- */
-    { k: 'primert',    n: 'Resultado del primer tiempo', grupo: 'Por tiempos', deporte: 'futbol',
+    /* --- por tiempos --- */
+    { k: 'descanso',   n: 'Descanso', grupo: 'Por tiempos', deporte: 'futbol',
       opciones: ['@local', 'Empate', '@visita'] },
-    { k: 'mitadfinal', n: 'Descanso / Final',            grupo: 'Por tiempos', deporte: 'futbol' },
-    { k: 'golespt',    n: 'Goles del primer tiempo',     grupo: 'Por tiempos', deporte: 'futbol',
+    { k: 'htft',       n: 'Primera parte/Tiempo reglamentario', grupo: 'Por tiempos', deporte: 'futbol' },
+    { k: 'segunda',    n: '2.ª parte', grupo: 'Por tiempos', deporte: 'futbol',
+      opciones: ['@local', 'Empate', '@visita'] },
+    { k: 'goles1p',    n: 'Total de goles - 1.ª parte', grupo: 'Por tiempos', deporte: 'futbol',
       opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '0.5' },
+    { k: 'goles2p',    n: 'Total de goles - 2.ª parte', grupo: 'Por tiempos', deporte: 'futbol',
+      opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '1.5' },
 
     /* --- por equipo --- */
-    { k: 'goleslocal', n: 'Goles del local',             grupo: 'Por equipo', deporte: 'futbol',
+    { k: 'golesequipo', n: 'Total de goles de un equipo', grupo: 'Por equipo', deporte: 'futbol',
       opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '1.5' },
-    { k: 'golesvisita',n: 'Goles del visitante',         grupo: 'Por equipo', deporte: 'futbol',
-      opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '1.5' },
-    { k: 'porteria',   n: 'Portería en cero',            grupo: 'Por equipo', deporte: 'futbol',
+    { k: 'sinrecibir', n: 'Victoria sin recibir goles en contra', grupo: 'Por equipo', deporte: 'futbol',
+      opciones: ['@local', '@visita'] },
+    { k: 'ganayambos', n: 'Victoria y ambos equipos marcan', grupo: 'Por equipo', deporte: 'futbol',
       opciones: ['@local', '@visita'] },
 
-    /* --- resultados y jugadores --- */
-    { k: 'exacto',     n: 'Marcador exacto',             grupo: 'Resultados', deporte: 'futbol' },
-    { k: 'margen',     n: 'Margen de victoria',          grupo: 'Resultados', deporte: 'futbol' },
-    { k: 'parimpar',   n: 'Par / Impar',                 grupo: 'Resultados', deporte: 'futbol',
-      opciones: ['Par', 'Impar'] },
-    { k: 'goleador',   n: 'Goleador',                    grupo: 'Jugadores', deporte: 'futbol' },
-    { k: 'tarjetas',   n: 'Tarjetas',                    grupo: 'Jugadores', deporte: 'futbol',
-      opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '4.5' },
-    { k: 'corners',    n: 'Córners',                     grupo: 'Jugadores', deporte: 'futbol',
+    /* --- tiros de esquina y tarjetas --- */
+    { k: 'corners',    n: 'Total de Tiros de Esquina', grupo: 'Esquinas y tarjetas', deporte: 'futbol',
       opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '9.5' },
+    { k: 'mascorners', n: 'Más Tiros de Esquina', grupo: 'Esquinas y tarjetas', deporte: 'futbol',
+      opciones: ['@local', 'Empate', '@visita'] },
+    { k: 'tarjetas',   n: 'Total de tarjetas', grupo: 'Esquinas y tarjetas', deporte: 'futbol',
+      opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '4.5' },
+    { k: 'mastarjetas',n: 'Más Tarjetas', grupo: 'Esquinas y tarjetas', deporte: 'futbol',
+      opciones: ['@local', 'Empate', '@visita'] },
+    { k: 'roja',       n: 'Tarjeta Roja en el Partido', grupo: 'Esquinas y tarjetas', deporte: 'futbol',
+      opciones: ['Sí', 'No'] },
+
+    /* --- jugadores --- */
+    { k: 'primergol',  n: 'Anotador del primer gol', grupo: 'Jugadores', deporte: 'futbol' },
+    { k: 'anotara',    n: 'Anotará', grupo: 'Jugadores', deporte: 'futbol' },
+    { k: 'disparos',   n: 'Disparos del jugador', grupo: 'Jugadores', deporte: 'futbol',
+      opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '1.5' },
+    { k: 'asistencia', n: 'Da una asistencia', grupo: 'Jugadores', deporte: 'futbol' },
 
     /* --- otros deportes --- */
-    { k: 'ganador',    n: 'Ganador del encuentro',       grupo: 'Otros deportes',
+    { k: 'prorroga',   n: 'Prórroga incluida', grupo: 'Otros deportes',
       opciones: ['@local', '@visita'] },
-    { k: 'spread',     n: 'Hándicap de puntos',          grupo: 'Otros deportes',
+    { k: 'hpuntos',    n: 'Hándicap de Puntos', grupo: 'Otros deportes',
       opciones: ['@local', '@visita'], linea: true, etiquetaLinea: 'Hándicap', ejemploLinea: '-4.5' },
-    { k: 'totalpuntos',n: 'Más / Menos puntos',          grupo: 'Otros deportes',
+    { k: 'totalpuntos',n: 'Total de puntos', grupo: 'Otros deportes',
       opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '210.5' },
+    { k: 'partidoten', n: 'Cuotas del partido', grupo: 'Otros deportes',
+      opciones: ['@local', '@visita'] },
+    { k: 'totaljuegos',n: 'Total de juegos', grupo: 'Otros deportes',
+      opciones: ['Más de', 'Menos de'], linea: true, etiquetaLinea: 'Línea', ejemploLinea: '22.5' },
+    { k: 'hsets',      n: 'Hándicap de Sets', grupo: 'Otros deportes',
+      opciones: ['@local', '@visita'], linea: true, etiquetaLinea: 'Hándicap', ejemploLinea: '-1.5' },
 
     /* --- comodín --- */
-    { k: 'otro',       n: 'Otro mercado',                grupo: 'Otros deportes' }
+    { k: 'otro',       n: 'Otro mercado', grupo: 'Otros deportes' }
   ];
 
   var MERCADOS_POR_CLAVE = {};
@@ -116,28 +141,60 @@
      Se completa en equipos.js, que se genera aparte por ser una tabla larga. */
   var EQUIPOS = global.EQUIPOS_CATALOGO || {};
 
-  var indice = null;
+  /* ====================== buscar un equipo ======================
+     Seba escribe "psg", "millos" o "Bayern" y tiene que salir el escudo
+     correcto. Se busca por nombre exacto, luego por el nombre sin palabras
+     de relleno (FC, CF, Club…) y por último por coincidencia parcial, pero
+     solo si apunta a un único equipo: ante la duda, mejor no adivinar. */
+  var indice = null, indiceNucleo = null;
+
+  var RELLENO = /\b(fc|cf|ac|as|sc|cd|ca|afc|ssc|rc|sv|vfb|vfl|tsg|fsv|bsc|us|ud|sd|rcd|club|de|del|do|da|the|1846|1901|1907|1909|1910|1913|29|05)\b/g;
+
   function normalizar(s) {
     return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]/g, '');
   }
+  function nucleo(s) {
+    return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s.]/g, ' ').replace(RELLENO, ' ').replace(/[^a-z0-9]/g, '');
+  }
+
   function construirIndice() {
-    indice = {};
+    indice = {}; indiceNucleo = {};
     Object.keys(EQUIPOS).forEach(function (liga) {
       (EQUIPOS[liga] || []).forEach(function (e) {
         var reg = { n: e.n, id: e.id, c: e.c, liga: liga };
-        indice[normalizar(e.n)] = reg;
-        (e.alias || []).forEach(function (a) {
-          if (!indice[normalizar(a)]) indice[normalizar(a)] = reg;
+        [e.n].concat(e.alias || []).forEach(function (t) {
+          var k = normalizar(t);
+          if (k && !indice[k]) indice[k] = reg;
+          var kn = nucleo(t);
+          if (kn && kn !== k) { if (!indice[kn]) indice[kn] = reg; }
+          if (kn) (indiceNucleo[kn] = indiceNucleo[kn] || []).push(reg);
         });
       });
     });
   }
+
   function buscarEquipo(nombre) {
     if (!nombre) return null;
     if (!indice) construirIndice();
-    return indice[normalizar(nombre)] || null;
+    var n = normalizar(nombre);
+    if (indice[n]) return indice[n];
+    var nn = nucleo(nombre);
+    if (nn && indice[nn]) return indice[nn];
+    if (!nn || nn.length < 3) return null;
+    // coincidencia parcial: vale solo si señala a un único club
+    var vistos = {}, unico = null, cuantos = 0;
+    Object.keys(indiceNucleo).forEach(function (k) {
+      if (k.indexOf(nn) !== 0 && nn.indexOf(k) !== 0) return;
+      indiceNucleo[k].forEach(function (reg) {
+        if (vistos[reg.id]) return;
+        vistos[reg.id] = true; unico = reg; cuantos++;
+      });
+    });
+    return cuantos === 1 ? unico : null;
   }
+
   function equiposDeLiga(liga) {
     if (liga && EQUIPOS[liga]) return EQUIPOS[liga];
     // sin liga elegida se ofrecen todos, para no bloquear el registro
@@ -181,7 +238,9 @@
     MERCADOS.forEach(function (m) {
       (grupos[m.grupo] = grupos[m.grupo] || []).push(m);
     });
-    return Object.keys(grupos).map(function (g) {
+    var orden = ['Principales', 'Hándicaps', 'Por tiempos', 'Por equipo',
+                 'Esquinas y tarjetas', 'Jugadores', 'Otros deportes'];
+    return orden.filter(function (g) { return grupos[g]; }).map(function (g) {
       return '<optgroup label="' + esc(g) + '">' + grupos[g].map(function (m) {
         return '<option value="' + esc(m.k) + '"' + (m.k === sel ? ' selected' : '') + '>' + esc(m.n) + '</option>';
       }).join('') + '</optgroup>';

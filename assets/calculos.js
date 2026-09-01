@@ -152,6 +152,32 @@
   /** Ganancia en euros, usando la tasa congelada del boleto. */
   function gananciaEur(b) { return copAEur(ganancia(b), b.tasaEurCop); }
 
+
+  /* ====================== retención en la fuente ======================
+     En Colombia los premios de juegos de suerte y azar pagan 20% de
+     retención cuando superan 48 UVT (art. 306, 317 y 404-1 del Estatuto
+     Tributario). BetPlay lo advierte en la pantalla de retiro, así que aquí
+     se calcula sobre el retiro y sobre el monto bruto, sin descontar lo
+     apostado. Para quien no declara renta en Colombia esa retención es el
+     impuesto final; para quien sí declara, se descuenta al declarar.
+
+     Ojo: esto es la retención colombiana. Lo que Seba deba tributar en
+     Malta por su residencia es otra cosa y no se calcula aquí. */
+
+  var UVT = { 2024: 47065, 2025: 49799, 2026: 52374 };
+  var TASA_RETENCION = 0.20;
+  var UVT_UMBRAL = 48;
+
+  function uvtDe(anio) { return UVT[anio] || UVT[2026]; }
+  function umbralRetencion(anio) { return UVT_UMBRAL * uvtDe(anio); }
+
+  /** Retención estimada sobre un retiro. Cero si no pasa el umbral. */
+  function retencionDe(monto, fecha) {
+    var anio = fecha ? +String(fecha).slice(0, 4) : 2026;
+    var m = Number(monto) || 0;
+    return m > umbralRetencion(anio) ? m * TASA_RETENCION : 0;
+  }
+
   /* ====================== movimientos de caja ====================== */
 
   function montoMovimiento(m) {
@@ -170,6 +196,8 @@
     RESUELTOS: RESUELTOS, estaResuelto: estaResuelto, estaPendiente: estaPendiente,
     ganancia: ganancia, gananciaEur: gananciaEur, retorno: retorno, invertido: invertido,
     gananciaPotencial: gananciaPotencial, probImplicita: probImplicita,
-    montoMovimiento: montoMovimiento
+    montoMovimiento: montoMovimiento,
+    uvtDe: uvtDe, umbralRetencion: umbralRetencion, retencionDe: retencionDe,
+    TASA_RETENCION: TASA_RETENCION, UVT_UMBRAL: UVT_UMBRAL
   };
 })(window);
