@@ -79,23 +79,37 @@ escriben a mano y se les dibuja su escudo.
 
 ## Sincronización con Google Sheets
 
-Igual que la app de la casa: los datos viven en el teléfono y se espejan en una hoja de
-cálculo. Configuración de una sola vez (instrucciones completas dentro de
-`_sistema/google_sheets_sync.gs`):
+La planilla ya viene conectada en la app: no hay que pegar nada en cada teléfono.
+Los datos viven en el teléfono y se espejan en la hoja; gana siempre el registro
+editado más tarde, así que los dos pueden anotar sin pisarse.
 
-1. Crear una hoja de Google llamada «Apuestas Seba».
-2. **Extensiones → Apps Script**, pegar el contenido de `_sistema/google_sheets_sync.gs`.
-3. **Implementar → Nueva implementación → Aplicación web** (ejecutar como: yo; acceso:
-   cualquier persona) → autorizar → copiar la URL que termina en `/exec`.
-4. Pegar esa URL en **Caja → Planilla de Google**, en los dos teléfonos.
+### ⚠️ Falta abrir el acceso a la implementación
 
-Gana siempre el registro editado más tarde, así que los dos pueden anotar sin pisarse.
+Tal como está desplegada ahora, la planilla **responde con la pantalla de acceso de
+Google** en vez de con los datos, y el navegador la bloquea. Se arregla en un minuto:
+
+1. Abrir la planilla → **Extensiones → Apps Script**.
+2. **Implementar → Gestionar implementaciones**.
+3. Tocar el **lápiz** (editar) de la implementación que ya existe.
+4. En **«Quién tiene acceso»** elegir **Cualquier persona**. En «Ejecutar como», **Yo**.
+5. **Implementar**.
+
+**Importante: hay que *editar* la implementación existente, no crear una nueva.**
+Editándola, la dirección `/exec` no cambia y la app sigue funcionando. Si se crea una
+implementación nueva, Google da otra dirección y hay que pegarla en
+**Caja → Planilla de Google**.
+
+Mientras no esté abierta, la app avisa en Caja y sigue funcionando: lo que se anote
+queda guardado en el teléfono, y se sincroniza en cuanto la planilla responda.
+
+> **Qué significa «Cualquier persona»:** que quien tenga esa dirección puede leer y
+> escribir en la hoja. La dirección no está indexada en ningún lado, pero sí viaja
+> dentro de la app, que es pública. Si prefieres cerrarla, en Apps Script:
+> Configuración del proyecto → Propiedades del script → agregar `TOKEN` con el valor
+> que quieras, y poner ese mismo valor en **Caja → Clave** en los dos teléfonos.
+
 Sin planilla la app funciona igual, solo que los datos quedan en ese teléfono; para
 mover datos de un lado a otro está **Bajar respaldo** / **Restaurar desde un respaldo**.
-
-> Si quieres que solo ustedes puedan escribir en la planilla, en Apps Script:
-> Configuración del proyecto → Propiedades del script → agregar `TOKEN` con el valor que
-> quieras, y poner ese mismo valor en Caja → Clave. Sin esa propiedad, no se pide clave.
 
 ## Dos cosas que conviene saber
 
