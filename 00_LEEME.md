@@ -69,10 +69,16 @@ Y contextualiza las malas rachas: *«con tu tasa de acierto y 126 boletos, lo es
 por puro azar era una racha de 12 derrotas seguidas; la tuya fue de 9»*. Perder varias
 seguidas casi nunca significa que algo esté roto.
 
-## Escudos
+## Competiciones y escudos
 
-Los escudos de los 184 equipos de las nueve ligas (las cinco grandes de Europa más
-Brasil, Colombia, Argentina y Turquía) se piden a una CDN pública. Si alguno no carga,
+Están las **29 competiciones**: las nueve ligas (las cinco grandes de Europa, Turquía,
+Colombia, Brasil y Argentina), las copas europeas (Champions, Europa League,
+Conference y Supercopa de Europa), las de América (Libertadores y Sudamericana), y la
+copa nacional de cada liga (FA Cup, Carabao, Copa del Rey, Coppa Italia, DFB-Pokal,
+Copa de Francia, Copa de Turquía, Copa BetPlay, Copa do Brasil y Copa Argentina).
+Al elegir una copa, el buscador ofrece los equipos de ese país.
+
+Los escudos de los 184 equipos se piden a una CDN pública. Si alguno no carga,
 la app **dibuja un escudo con las iniciales sobre los colores del club**, así que nunca
 se ve una imagen rota. Los equipos que no estén en el catálogo también funcionan: se
 escriben a mano y se les dibuja su escudo.

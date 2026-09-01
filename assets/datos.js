@@ -18,31 +18,49 @@
   /* ====================== ligas ======================
      `id` es el identificador de la CDN de escudos; `c` son los colores del
      torneo para el escudo generado cuando la imagen no carga. */
+  /* Todos los `id` están verificados uno a uno contra la CDN: se descargó el
+     logo de cada competición y se comprobó a ojo que fuera la correcta. */
   var LIGAS = {
-    /* --- las cinco grandes de Europa --- */
-    premier:    { n: 'Premier League',      pais: 'Inglaterra', deporte: 'futbol', grupo: 'Europa', id: 39,  c: ['#3D195B', '#FFFFFF'] },
-    laliga:     { n: 'LaLiga',              pais: 'España',     deporte: 'futbol', grupo: 'Europa', id: 140, c: ['#E52534', '#FFFFFF'] },
-    seriea:     { n: 'Serie A',             pais: 'Italia',     deporte: 'futbol', grupo: 'Europa', id: 135, c: ['#0B4EA2', '#FFFFFF'] },
-    bundesliga: { n: 'Bundesliga',          pais: 'Alemania',   deporte: 'futbol', grupo: 'Europa', id: 78,  c: ['#D20515', '#FFFFFF'] },
-    ligue1:     { n: 'Ligue 1',             pais: 'Francia',    deporte: 'futbol', grupo: 'Europa', id: 61,  c: ['#091C3E', '#D8B26A'] },
+    /* --- las cinco grandes de Europa, más Turquía --- */
+    premier:    { n: 'Premier League',      pais: 'Inglaterra', deporte: 'futbol', grupo: 'Ligas de Europa', id: 39,  c: ['#3D195B', '#FFFFFF'] },
+    laliga:     { n: 'LaLiga',              pais: 'España',     deporte: 'futbol', grupo: 'Ligas de Europa', id: 140, c: ['#E52534', '#FFFFFF'] },
+    seriea:     { n: 'Serie A',             pais: 'Italia',     deporte: 'futbol', grupo: 'Ligas de Europa', id: 135, c: ['#0B4EA2', '#FFFFFF'] },
+    bundesliga: { n: 'Bundesliga',          pais: 'Alemania',   deporte: 'futbol', grupo: 'Ligas de Europa', id: 78,  c: ['#D20515', '#FFFFFF'] },
+    ligue1:     { n: 'Ligue 1',             pais: 'Francia',    deporte: 'futbol', grupo: 'Ligas de Europa', id: 61,  c: ['#091C3E', '#D8B26A'] },
+    superlig:   { n: 'Süper Lig',           pais: 'Turquía',    deporte: 'futbol', grupo: 'Ligas de Europa', id: 203, c: ['#E30A17', '#FFFFFF'] },
 
-    /* --- Sudamérica y Turquía --- */
-    betplay:    { n: 'Liga BetPlay Dimayor', pais: 'Colombia',  deporte: 'futbol', grupo: 'América', id: 239, c: ['#00A94F', '#FFFFFF'] },
-    brasileirao:{ n: 'Brasileirão Série A',  pais: 'Brasil',    deporte: 'futbol', grupo: 'América', id: 71,  c: ['#009C3B', '#FFDF00'] },
-    argentina:  { n: 'Liga Profesional',     pais: 'Argentina', deporte: 'futbol', grupo: 'América', id: 128, c: ['#75AADB', '#FFFFFF'] },
-    superlig:   { n: 'Süper Lig',            pais: 'Turquía',   deporte: 'futbol', grupo: 'Europa',  id: 203, c: ['#E30A17', '#FFFFFF'] },
+    /* --- ligas de América --- */
+    betplay:    { n: 'Liga BetPlay Dimayor', pais: 'Colombia',  deporte: 'futbol', grupo: 'Ligas de América', id: 239, c: ['#00A94F', '#FFFFFF'] },
+    brasileirao:{ n: 'Brasileirão Série A',  pais: 'Brasil',    deporte: 'futbol', grupo: 'Ligas de América', id: 71,  c: ['#009C3B', '#FFDF00'] },
+    argentina:  { n: 'Liga Profesional',     pais: 'Argentina', deporte: 'futbol', grupo: 'Ligas de América', id: 128, c: ['#75AADB', '#FFFFFF'] },
 
-    /* --- copas --- */
-    champions:  { n: 'Champions League',     pais: 'Europa',    deporte: 'futbol', grupo: 'Copas', id: 2,   c: ['#0A1E5E', '#FFFFFF'] },
-    europa:     { n: 'Europa League',        pais: 'Europa',    deporte: 'futbol', grupo: 'Copas', id: 3,   c: ['#FF5C00', '#1B1B1B'] },
-    libertadores:{ n: 'Copa Libertadores',   pais: 'América',   deporte: 'futbol', grupo: 'Copas', id: 13,  c: ['#B99B4E', '#0D1B3E'] },
-    sudamericana:{ n: 'Copa Sudamericana',   pais: 'América',   deporte: 'futbol', grupo: 'Copas', id: 11,  c: ['#F5A623', '#0D1B3E'] },
-    mundial:    { n: 'Selecciones',          pais: 'Mundo',     deporte: 'futbol', grupo: 'Copas', id: 1,   c: ['#2F4B8D', '#FFFFFF'] },
+    /* --- copas europeas --- */
+    champions:  { n: 'Champions League',     pais: 'Europa',    deporte: 'futbol', grupo: 'Copas de Europa', id: 2,   c: ['#0A1E5E', '#FFFFFF'] },
+    europa:     { n: 'Europa League',        pais: 'Europa',    deporte: 'futbol', grupo: 'Copas de Europa', id: 3,   c: ['#FF5C00', '#1B1B1B'] },
+    conference: { n: 'Conference League',    pais: 'Europa',    deporte: 'futbol', grupo: 'Copas de Europa', id: 848, c: ['#00B94E', '#FFFFFF'] },
+    supercopaeu:{ n: 'Supercopa de Europa',  pais: 'Europa',    deporte: 'futbol', grupo: 'Copas de Europa', id: 531, c: ['#0A1E5E', '#C9B37E'] },
 
-    /* --- otros deportes --- */
-    nba:        { n: 'NBA',                  pais: 'EE. UU.',   deporte: 'baloncesto', grupo: 'Otros deportes', id: 12, c: ['#1D428A', '#C8102E'] },
-    atp:        { n: 'Tenis ATP / WTA',      pais: 'Mundo',     deporte: 'tenis',      grupo: 'Otros deportes', id: 0,  c: ['#0E7A5F', '#FFFFFF'] },
-    otra:       { n: 'Otra competición',     pais: '',          deporte: 'otro',       grupo: 'Otros deportes', id: 0,  c: ['#5A6478', '#FFFFFF'] }
+    /* --- copas de América --- */
+    libertadores:{ n: 'Copa Libertadores',   pais: 'América',   deporte: 'futbol', grupo: 'Copas de América', id: 13,  c: ['#B99B4E', '#0D1B3E'] },
+    sudamericana:{ n: 'Copa Sudamericana',   pais: 'América',   deporte: 'futbol', grupo: 'Copas de América', id: 11,  c: ['#F5A623', '#0D1B3E'] },
+
+    /* --- copas nacionales --- */
+    facup:      { n: 'FA Cup',               pais: 'Inglaterra', deporte: 'futbol', grupo: 'Copas nacionales', id: 45,  c: ['#E5202E', '#FFFFFF'] },
+    carabao:    { n: 'Carabao Cup',          pais: 'Inglaterra', deporte: 'futbol', grupo: 'Copas nacionales', id: 48,  c: ['#009A44', '#F5C518'] },
+    copadelrey: { n: 'Copa del Rey',         pais: 'España',     deporte: 'futbol', grupo: 'Copas nacionales', id: 143, c: ['#003B7C', '#C9B37E'] },
+    coppaitalia:{ n: 'Coppa Italia',         pais: 'Italia',     deporte: 'futbol', grupo: 'Copas nacionales', id: 137, c: ['#0B4EA2', '#FFFFFF'] },
+    dfbpokal:   { n: 'DFB-Pokal',            pais: 'Alemania',   deporte: 'futbol', grupo: 'Copas nacionales', id: 81,  c: ['#E30613', '#F5C518'] },
+    coupefrance:{ n: 'Copa de Francia',      pais: 'Francia',    deporte: 'futbol', grupo: 'Copas nacionales', id: 66,  c: ['#1F3B73', '#FFFFFF'] },
+    copaturquia:{ n: 'Copa de Turquía',      pais: 'Turquía',    deporte: 'futbol', grupo: 'Copas nacionales', id: 206, c: ['#E30A17', '#FFFFFF'] },
+    copacolombia:{ n: 'Copa BetPlay Dimayor', pais: 'Colombia',  deporte: 'futbol', grupo: 'Copas nacionales', id: 240, c: ['#00A94F', '#FFFFFF'] },
+    copabrasil: { n: 'Copa do Brasil',       pais: 'Brasil',     deporte: 'futbol', grupo: 'Copas nacionales', id: 73,  c: ['#009C3B', '#FFDF00'] },
+    copaargentina:{ n: 'Copa Argentina',     pais: 'Argentina',  deporte: 'futbol', grupo: 'Copas nacionales', id: 130, c: ['#75AADB', '#FFFFFF'] },
+
+    /* --- otros --- */
+    mundial:    { n: 'Selecciones',          pais: 'Mundo',     deporte: 'futbol', grupo: 'Otros', id: 1,   c: ['#2F4B8D', '#FFFFFF'] },
+    nba:        { n: 'NBA',                  pais: 'EE. UU.',   deporte: 'baloncesto', grupo: 'Otros', id: 12, c: ['#1D428A', '#C8102E'] },
+    atp:        { n: 'Tenis ATP / WTA',      pais: 'Mundo',     deporte: 'tenis',      grupo: 'Otros', id: 0,  c: ['#0E7A5F', '#FFFFFF'] },
+    otra:       { n: 'Otra competición',     pais: '',          deporte: 'otro',       grupo: 'Otros', id: 0,  c: ['#5A6478', '#FFFFFF'] }
   };
 
   /* ====================== tipos de apuesta ======================
@@ -195,11 +213,31 @@
     return cuantos === 1 ? unico : null;
   }
 
+  /* Las copas no tienen plantilla propia: se juegan con los equipos de su país.
+     Al elegir la FA Cup conviene ofrecer los ingleses, no los 184 de golpe. */
+  var EQUIPOS_DE_COPA = {
+    facup: ['premier'], carabao: ['premier'],
+    copadelrey: ['laliga'], coppaitalia: ['seriea'], dfbpokal: ['bundesliga'],
+    coupefrance: ['ligue1'], copaturquia: ['superlig'],
+    copacolombia: ['betplay'], copabrasil: ['brasileirao'], copaargentina: ['argentina'],
+    // las europeas mezclan países: se ofrecen todos los de las grandes ligas
+    champions: ['premier', 'laliga', 'seriea', 'bundesliga', 'ligue1', 'superlig'],
+    europa: ['premier', 'laliga', 'seriea', 'bundesliga', 'ligue1', 'superlig'],
+    conference: ['premier', 'laliga', 'seriea', 'bundesliga', 'ligue1', 'superlig'],
+    supercopaeu: ['premier', 'laliga', 'seriea', 'bundesliga', 'ligue1'],
+    libertadores: ['betplay', 'brasileirao', 'argentina'],
+    sudamericana: ['betplay', 'brasileirao', 'argentina']
+  };
+
   function equiposDeLiga(liga) {
     if (liga && EQUIPOS[liga]) return EQUIPOS[liga];
-    // sin liga elegida se ofrecen todos, para no bloquear el registro
+    var fuentes = EQUIPOS_DE_COPA[liga];
+    if (!fuentes) {
+      // sin liga elegida (o una sin catálogo) se ofrecen todos, para no bloquear
+      fuentes = Object.keys(EQUIPOS);
+    }
     var todos = [];
-    Object.keys(EQUIPOS).forEach(function (k) { todos = todos.concat(EQUIPOS[k] || []); });
+    fuentes.forEach(function (k) { todos = todos.concat(EQUIPOS[k] || []); });
     return todos;
   }
 
@@ -225,7 +263,8 @@
       var l = LIGAS[k];
       (grupos[l.grupo] = grupos[l.grupo] || []).push([k, l]);
     });
-    return ['Europa', 'América', 'Copas', 'Otros deportes'].filter(function (g) { return grupos[g]; })
+    return ['Ligas de Europa', 'Ligas de América', 'Copas de Europa', 'Copas de América',
+            'Copas nacionales', 'Otros'].filter(function (g) { return grupos[g]; })
       .map(function (g) {
         return '<optgroup label="' + esc(g) + '">' + grupos[g].map(function (par) {
           return '<option value="' + esc(par[0]) + '"' + (par[0] === sel ? ' selected' : '') + '>' +
