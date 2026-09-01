@@ -1,0 +1,16 @@
+{
+  "name": "El Embajador · Apuestas de Seba",
+  "short_name": "El Embajador",
+  "description": "Registro de apuestas en BetPlay con caja real en pesos y euros.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#16294F",
+  "theme_color": "#16294F",
+  "lang": "es-CO",
+  "icons": [
+    { "src": "assets/icono.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icono.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

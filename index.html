@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>El Embajador · Apuestas de Seba</title>
+<meta name="description" content="Registro de apuestas deportivas en BetPlay: boletos, caja real en pesos y euros, y las métricas que la plataforma no muestra.">
+<meta name="theme-color" content="#16294F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="El Embajador">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icono.png">
+<link rel="icon" href="assets/icono.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/estilo.css">
+</head>
+<body>
+
+<header>
+  <h1 class="marca">El <em>Embajador</em></h1>
+  <p class="lema">Las apuestas de Seba · BetPlay</p>
+  <div class="tricolor" aria-hidden="true"></div>
+</header>
+
+<main class="cont">
+
+  <!-- ============================ HOY ============================ -->
+  <section id="sec-hoy" class="act" aria-labelledby="t-hoy">
+    <h2 id="t-hoy" class="sr">Resumen</h2>
+    <div id="marcador"></div>
+    <div id="fichasHoy" class="fichas"></div>
+    <div id="avisosHoy"></div>
+    <h3 class="seccion-titulo">Últimos boletos</h3>
+    <div id="ultimosBoletos"></div>
+  </section>
+
+  <!-- ============================ BOLETOS ============================ -->
+  <section id="sec-boletos" aria-labelledby="t-boletos">
+    <h2 id="t-boletos" class="sr">Boletos</h2>
+    <div class="filtros">
+      <select id="fMes"    aria-label="Filtrar por mes"></select>
+      <select id="fEstado" aria-label="Filtrar por resultado"></select>
+      <select id="fLiga"   aria-label="Filtrar por liga"></select>
+      <select id="fTipo"   aria-label="Filtrar por tipo de boleto"></select>
+    </div>
+    <div id="resumenFiltro"></div>
+    <div id="listaBoletos"></div>
+  </section>
+
+  <!-- ============================ ANÁLISIS ============================ -->
+  <section id="sec-analisis" aria-labelledby="t-analisis">
+    <h2 id="t-analisis" class="sr">Análisis</h2>
+    <div class="filtros">
+      <select id="aPeriodo" aria-label="Período de análisis"></select>
+    </div>
+    <div id="analisis"></div>
+  </section>
+
+  <!-- ============================ CAJA ============================ -->
+  <section id="sec-caja" aria-labelledby="t-caja">
+    <h2 id="t-caja" class="sr">Caja</h2>
+    <div id="caja"></div>
+  </section>
+
+</main>
+
+<!-- ============================ navegación ============================ -->
+<nav aria-label="Secciones">
+  <button type="button" class="act" data-sec="hoy" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+    <span>Hoy</span>
+  </button>
+  <button type="button" data-sec="boletos">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h15A1.5 1.5 0 0 1 21 8.5v2a2 2 0 0 0 0 3v2A1.5 1.5 0 0 1 19.5 17h-15A1.5 1.5 0 0 1 3 15.5v-2a2 2 0 0 0 0-3Z"/><path d="M12 7v10" stroke-dasharray="2 2.5"/></svg>
+    <span>Boletos</span>
+  </button>
+  <button type="button" class="fab" id="btnNuevo" aria-label="Registrar una apuesta nueva">
+    <span class="disco"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+    <span>Apostar</span>
+  </button>
+  <button type="button" data-sec="analisis">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18"/><path d="M6 20v-6"/><path d="M11 20V7"/><path d="M16 20v-9"/><path d="M21 20V4"/></svg>
+    <span>Análisis</span>
+  </button>
+  <button type="button" data-sec="caja">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 4l9 3.5v9L12 20l-9-3.5Z"/><path d="M3 7.5 12 11l9-3.5"/><path d="M12 11v9"/></svg>
+    <span>Caja</span>
+  </button>
+</nav>
+
+<!-- ============================ hoja: boleto ============================ -->
+<div class="telon" id="telonBoleto" role="dialog" aria-modal="true" aria-labelledby="tituloHoja">
+  <div class="hoja" id="hojaBoleto">
+    <div class="tirador" aria-hidden="true"></div>
+    <div class="hoja-barra">
+      <h2 id="tituloHoja">Nuevo boleto</h2>
+      <button type="button" class="cerrar" id="cerrarBoleto" aria-label="Cerrar">×</button>
+    </div>
+    <form id="formBoleto" novalidate></form>
+  </div>
+</div>
+
+<!-- ============================ hoja: movimiento ============================ -->
+<div class="telon" id="telonMov" role="dialog" aria-modal="true" aria-labelledby="tituloMov">
+  <div class="hoja">
+    <div class="tirador" aria-hidden="true"></div>
+    <div class="hoja-barra">
+      <h2 id="tituloMov">Movimiento de caja</h2>
+      <button type="button" class="cerrar" id="cerrarMov" aria-label="Cerrar">×</button>
+    </div>
+    <form id="formMov" novalidate></form>
+  </div>
+</div>
+
+<script src="assets/datos.js"></script>
+<script src="assets/escudos.js"></script>
+<script src="assets/calculos.js"></script>
+<script src="assets/graficos.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
