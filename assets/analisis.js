@@ -597,6 +597,7 @@
     var cuerpo = G.barrasH(cortes.map(function (c, i) {
       return {
         et: nombre(c.clave),
+        ico: id === 'liga' ? global.ESCUDOS.escudoLiga(c.clave, 15) : '',
         v: c.neto,
         color: 'var(--cat-' + ((i % 6) + 1) + ')',
         tip: '<b>' + esc(nombre(c.clave)) + '</b><br>' + c.n + ' boletos · ' + C.fmtCOP(c.turnover) + ' apostados<br>' +
@@ -623,8 +624,12 @@
         media(norm) > 0.05 ? 'neg' : media(norm) <= 0.03 ? 'pos' : '') +
       global.APP.ficha('Regularidad', cv < 0.35 ? 'Alta' : cv < 0.6 ? 'Media' : 'Baja',
         'variación de ' + Math.round(cv * 100) + '%', cv < 0.35 ? 'pos' : cv > 0.6 ? 'neg' : '') +
-      (sizing != null ? global.APP.ficha('Puntería', sizing > 0.05 ? 'Buena' : sizing < -0.05 ? 'Invertida' : 'Neutra',
-        'apuestas fuerte en tus…', sizing > 0.05 ? 'pos' : sizing < -0.05 ? 'neg' : '') : '') +
+      (sizing != null ? global.APP.ficha('Puntería',
+        sizing > 0.05 ? 'Buena' : sizing < -0.05 ? 'Al revés' : 'Neutra',
+        sizing > 0.05 ? 'pones más en las que aciertas'
+          : sizing < -0.05 ? 'pones más en las que fallas'
+          : 'el monto no dice nada del resultado',
+        sizing > 0.05 ? 'pos' : sizing < -0.05 ? 'neg' : '') : '') +
     '</div>';
 
     if (media(norm) > 0.05) {

@@ -191,14 +191,14 @@
       var estilo = hayNeg
         ? (d.v >= 0 ? 'left:50%;width:' + (pct / 2) + '%' : 'right:50%;width:' + (pct / 2) + '%')
         : 'left:0;width:' + pct + '%';
-      s += '<div class="barra-fila">' +
-             '<span class="et" title="' + esc(d.et) + '">' + esc(d.et) + '</span>' +
-             '<span class="barra-riel"' + (d.tip ? ' data-tip="' + esc(d.tip) + '"' : '') + '>' +
-               (hayNeg ? '<span style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--eje)"></span>' : '') +
-               '<span class="rel" style="' + estilo + ';background:' + color + '"></span>' +
-             '</span>' +
+      s += '<div class="barra-fila"' + (d.tip ? ' data-tip="' + esc(d.tip) + '"' : '') + '>' +
+             '<span class="et">' + (d.ico || '') + '<span class="nom">' + esc(d.et) + '</span></span>' +
              '<span class="vl" style="color:' + (hayNeg ? (d.v >= 0 ? 'var(--div-pos)' : 'var(--div-neg)') : 'var(--tinta-media)') + '">' +
                esc(fmt(d.v)) + '</span>' +
+             '<span class="barra-riel">' +
+               (hayNeg ? '<span class="cero"></span>' : '') +
+               '<span class="rel" style="' + estilo + ';background:' + color + '"></span>' +
+             '</span>' +
            '</div>';
     });
     return s + '</div>';

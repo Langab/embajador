@@ -415,16 +415,23 @@ section.act { display: block; animation: entra .22s ease-out; }
                 color: var(--tinta-media); font-weight: 600; }
 .leyenda i { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 10px; }
 
-/* barras horizontales con etiqueta: el formato más legible en celular */
-.barras { display: flex; flex-direction: column; gap: 8px; }
-.barra-fila { display: grid; grid-template-columns: 94px 1fr auto; gap: 7px; align-items: center; }
-.barra-fila .et { font-size: 11px; font-weight: 700; color: var(--tinta-media);
-                  line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.barra-riel { height: 16px; background: var(--papel-hueco); border-radius: 4px; position: relative;
-              overflow: hidden; }
+/* barras horizontales: el nombre arriba y la barra debajo, a todo el ancho.
+   Con una columna fija de etiqueta, "Liga BetPlay Dimayor" se cortaba siempre. */
+.barras { display: flex; flex-direction: column; gap: 11px; }
+.barra-fila { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; align-items: baseline; }
+.barra-fila .et {
+  display: flex; align-items: center; gap: 5px; min-width: 0;
+  font-size: 12px; font-weight: 700; color: var(--tinta-media);
+}
+.barra-fila .et .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-fila .et .escudo { flex: 0 0 auto; }
+.barra-fila .vl { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums;
+                  white-space: nowrap; }
+.barra-riel { grid-column: 1 / -1; height: 13px; background: var(--papel-hueco);
+              border-radius: 4px; position: relative; overflow: hidden; }
 .barra-riel .rel { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
-.barra-fila .vl { font-size: 11.5px; font-weight: 800; font-variant-numeric: tabular-nums;
-                  min-width: 52px; text-align: right; }
+.barra-riel .cero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+                    background: var(--eje); }
 
 /* tabla de datos: la alternativa accesible a cada gráfico */
 .tabla-datos { width: 100%; border-collapse: collapse; font-size: 12px; }

@@ -185,7 +185,9 @@
     s += '<span style="font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-suave)">' +
          esc(fechaCorta(b.fecha)) + (b.hora ? ' · ' + esc(b.hora) : '') + '</span>';
     if (b.liga && D.LIGAS[b.liga]) {
-      s += '<span style="font-size:10.5px;color:var(--tinta-suave);font-weight:600">· ' + esc(D.LIGAS[b.liga].n) + '</span>';
+      s += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;' +
+           'color:var(--tinta-suave);font-weight:600">' + E.escudoLiga(b.liga, 14) +
+           esc(D.LIGAS[b.liga].n) + '</span>';
     }
     if (b.enVivo) s += '<span class="pill vivo">En vivo</span>';
     if (b.freebet) s += '<span class="pill free">Gratis</span>';
