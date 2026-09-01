@@ -1,6 +1,6 @@
 {
-  "name": "El Embajador · Apuestas de Seba",
-  "short_name": "El Embajador",
+  "name": "La arepa veneca ctm · Apuestas de Seba",
+  "short_name": "La arepa veneca",
   "description": "Registro de apuestas en BetPlay con caja real en pesos y euros.",
   "start_url": "./index.html",
   "scope": "./",

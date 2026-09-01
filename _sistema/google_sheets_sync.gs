@@ -1,5 +1,5 @@
 /**
- * Sincronización de "El Embajador" (registro de apuestas de Seba) con Google Sheets.
+ * Sincronización de "La arepa veneca ctm" (las apuestas de Seba) con Google Sheets.
  *
  * CÓMO INSTALARLO (una sola vez, ~5 minutos):
  * 1. En Google Drive crea una hoja de cálculo nueva llamada "Apuestas Seba".
@@ -9,8 +9,13 @@
  *      - Ejecutar como: Yo
  *      - Quién tiene acceso: Cualquier persona
  *    Presiona "Implementar" y autoriza los permisos cuando lo pida.
- * 4. Copia la URL que termina en /exec y pégala en la pestaña Caja → Sincronización
- *    de la app, en el teléfono de Seba y en el tuyo. Listo.
+ * 4. Copia la URL que termina en /exec y pégala en Caja → Planilla de Google
+ *    (la app ya trae una puesta; solo hace falta si cambias de planilla).
+ *
+ * PARA DEJAR LA PLANILLA EN CERO: usa el botón "Empezar de cero" de la pestaña
+ * Caja, o ejecuta a mano la función limpiarTodo desde este editor. Borrar las
+ * filas a mano NO basta: el teléfono que todavía tenga los datos los vuelve a
+ * subir en la siguiente sincronización.
  *
  * Las hojas "Apuestas" y "Movimientos" se crean solas. No cambies el orden de sus
  * columnas: la app las lee por posición.
@@ -138,12 +143,48 @@ function tokenOk_(recibido) {
   return String(recibido || '') === esperado;
 }
 
+/* ====================== borrón y cuenta nueva ======================
+   Vaciar la hoja a mano no basta: cualquier teléfono que todavía tenga los
+   registros los vuelve a subir en la siguiente sincronización, y reaparecen.
+   Por eso se guarda la fecha del último borrado: todo lo anterior a esa marca
+   se rechaza, venga del teléfono que venga. Así el borrado sí se queda. */
+
+function marcaBorrado_() {
+  return PropertiesService.getScriptProperties().getProperty('PURGADO_EN') || '';
+}
+
+function borrarTodo_() {
+  var marca = new Date().toISOString();
+  PropertiesService.getScriptProperties().setProperty('PURGADO_EN', marca);
+  escribir_(HOJAS.apuestas, []);
+  escribir_(HOJAS.movimientos, []);
+  return marca;
+}
+
+/** Descarta lo que sea anterior al último borrón. */
+function vigentes_(lista, marca) {
+  if (!marca) return lista;
+  return lista.filter(function (e) { return String(e.updatedAt || '') > marca; });
+}
+
+/**
+ * Para ejecutar a mano desde el editor de Apps Script cuando quieras dejar la
+ * planilla en cero: elige "limpiarTodo" arriba y dale a Ejecutar.
+ */
+function limpiarTodo() {
+  var marca = borrarTodo_();
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    'Planilla vaciada. Lo anterior a esta marca ya no se vuelve a subir.', 'Listo', 8);
+  return marca;
+}
+
 function doGet(e) {
   if (!tokenOk_(e && e.parameter && e.parameter.token)) {
     return respuesta_({ ok: false, error: 'clave incorrecta' });
   }
   return respuesta_({
     ok: true,
+    purgadoEn: marcaBorrado_(),
     apuestas: leer_(HOJAS.apuestas),
     movimientos: leer_(HOJAS.movimientos)
   });
@@ -157,11 +198,18 @@ function doPost(e) {
     if (!tokenOk_(body.token)) {
       return respuesta_({ ok: false, error: 'clave incorrecta' });
     }
-    var apuestas = fusionar_(leer_(HOJAS.apuestas), body.apuestas);
-    var movimientos = fusionar_(leer_(HOJAS.movimientos), body.movimientos);
+
+    // la app pide empezar de cero
+    if (body.purgar === true) {
+      return respuesta_({ ok: true, purgadoEn: borrarTodo_(), apuestas: [], movimientos: [] });
+    }
+
+    var marca = marcaBorrado_();
+    var apuestas = vigentes_(fusionar_(leer_(HOJAS.apuestas), vigentes_(body.apuestas || [], marca)), marca);
+    var movimientos = vigentes_(fusionar_(leer_(HOJAS.movimientos), vigentes_(body.movimientos || [], marca)), marca);
     escribir_(HOJAS.apuestas, apuestas);
     escribir_(HOJAS.movimientos, movimientos);
-    return respuesta_({ ok: true, apuestas: apuestas, movimientos: movimientos });
+    return respuesta_({ ok: true, purgadoEn: marca, apuestas: apuestas, movimientos: movimientos });
   } catch (err) {
     return respuesta_({ ok: false, error: String(err) });
   } finally {

@@ -1,5 +1,5 @@
 /* =========================================================================
-   EL EMBAJADOR — registro de apuestas
+   LA AREPA VENECA CTM — registro de apuestas
    Identidad: Millonarios FC (azul chambray #2F4B8D + prusia #00264F + blanco)
    con la bandera de Colombia como capa semántica (oro #FCD116, rojo #CE1126).
    Material: la tribuna es azul, los boletos son papel. Siempre.
@@ -145,7 +145,7 @@ nav :focus-visible, .marca:focus-visible { outline-color: var(--oro); }
 /* ============================ cabecera ============================ */
 header { padding: calc(18px + env(safe-area-inset-top)) 14px 12px; text-align: center; }
 .marca {
-  font-size: clamp(30px, 9vw, 42px); font-weight: 800; line-height: .92;
+  font-size: clamp(26px, 7.6vw, 38px); font-weight: 800; line-height: .95;
   font-variation-settings: "wdth" 118, "wght" 800;
   letter-spacing: -.015em; text-transform: uppercase; color: #fff;
   text-shadow: 0 2px 14px rgba(0, 0, 0, .35);

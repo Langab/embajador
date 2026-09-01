@@ -1,4 +1,4 @@
-# ⚽ El Embajador — las apuestas de Seba
+# ⚽ La arepa veneca ctm — las apuestas de Seba
 
 App web para que Sebastián lleve el orden de sus apuestas en **BetPlay** (Colombia),
 con la caja real en **pesos y euros**, y las métricas que la plataforma no muestra.
@@ -83,30 +83,22 @@ La planilla ya viene conectada en la app: no hay que pegar nada en cada teléfon
 Los datos viven en el teléfono y se espejan en la hoja; gana siempre el registro
 editado más tarde, así que los dos pueden anotar sin pisarse.
 
-### ⚠️ Falta abrir el acceso a la implementación
+### Cómo empezar de cero
 
-Tal como está desplegada ahora, la planilla **responde con la pantalla de acceso de
-Google** en vez de con los datos, y el navegador la bloquea. Se arregla en un minuto:
+Borrar las filas a mano en la hoja **no funciona**: el teléfono que todavía tenga los
+datos los vuelve a subir en la siguiente sincronización y reaparecen. Para vaciarlo de
+verdad, en la app: **Caja → Empezar de cero**. Eso borra este teléfono y la planilla, y
+deja una marca con la fecha; los demás teléfonos sueltan lo suyo la próxima vez que
+sincronicen, en vez de volver a subirlo.
 
-1. Abrir la planilla → **Extensiones → Apps Script**.
-2. **Implementar → Gestionar implementaciones**.
-3. Tocar el **lápiz** (editar) de la implementación que ya existe.
-4. En **«Quién tiene acceso»** elegir **Cualquier persona**. En «Ejecutar como», **Yo**.
-5. **Implementar**.
+También se puede hacer desde Apps Script ejecutando la función `limpiarTodo`.
 
-**Importante: hay que *editar* la implementación existente, no crear una nueva.**
-Editándola, la dirección `/exec` no cambia y la app sigue funcionando. Si se crea una
-implementación nueva, Google da otra dirección y hay que pegarla en
-**Caja → Planilla de Google**.
-
-Mientras no esté abierta, la app avisa en Caja y sigue funcionando: lo que se anote
-queda guardado en el teléfono, y se sincroniza en cuanto la planilla responda.
-
-> **Qué significa «Cualquier persona»:** que quien tenga esa dirección puede leer y
-> escribir en la hoja. La dirección no está indexada en ningún lado, pero sí viaja
-> dentro de la app, que es pública. Si prefieres cerrarla, en Apps Script:
-> Configuración del proyecto → Propiedades del script → agregar `TOKEN` con el valor
-> que quieras, y poner ese mismo valor en **Caja → Clave** en los dos teléfonos.
+> **Qué significa «Cualquier persona»** en el acceso de la implementación: que quien
+> tenga esa dirección puede leer y escribir en la hoja. La dirección no está indexada
+> en ningún lado, pero sí viaja dentro de la app, que es pública. Si prefieres
+> cerrarla, en Apps Script: Configuración del proyecto → Propiedades del script →
+> agregar `TOKEN` con el valor que quieras, y poner ese mismo valor en
+> **Caja → Clave** en los dos teléfonos.
 
 Sin planilla la app funciona igual, solo que los datos quedan en ese teléfono; para
 mover datos de un lado a otro está **Bajar respaldo** / **Restaurar desde un respaldo**.
@@ -159,7 +151,7 @@ GitHub Pages republica solo en un minuto.
 Los colores salen del azul chambray de **Millonarios** (`#2F4B8D`) con la bandera de
 Colombia como capa de significado: oro para lo que pide atención, rojo para lo que se
 perdió. El fondo es siempre azul y las tarjetas son papel — que es, literalmente, el
-uniforme del Embajador. Cada boleto se dibuja como un cupón de verdad, con su
+uniforme de Millonarios. Cada boleto se dibuja como un cupón de verdad, con su
 perforación, sus muescas y el resultado estampado como sello de goma.
 
 La paleta de los gráficos pasó los seis chequeos de contraste y daltonismo en modo

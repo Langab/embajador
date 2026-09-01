@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="El Embajador">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="La arepa veneca ctm">
   <defs>
     <linearGradient id="t" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#35539A"/><stop offset="1" stop-color="#16294F"/>
@@ -9,7 +9,7 @@
   <path d="M136 168h240a20 20 0 0 1 20 20v56a30 30 0 0 0 0 60v56a20 20 0 0 1-20 20H136a20 20 0 0 1-20-20v-56a30 30 0 0 0 0-60v-56a20 20 0 0 1 20-20z" fill="#F7F5EF"/>
   <path d="M256 182v148" stroke="#C7BFAC" stroke-width="7" stroke-dasharray="12 13" stroke-linecap="round"/>
   <!-- la cuota estampada -->
-  <text x="196" y="278" font-family="Archivo, Helvetica, Arial, sans-serif" font-size="60" font-weight="800" fill="#2F4B8D" text-anchor="middle">E</text>
+  <text x="196" y="278" font-family="Archivo, Helvetica, Arial, sans-serif" font-size="60" font-weight="800" fill="#2F4B8D" text-anchor="middle">A</text>
   <circle cx="316" cy="256" r="34" fill="none" stroke="#2F4B8D" stroke-width="9"/>
   <path d="M316 232v48M292 256h48" stroke="#FCD116" stroke-width="9" stroke-linecap="round"/>
   <!-- tricolor -->

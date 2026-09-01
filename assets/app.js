@@ -116,6 +116,15 @@
             : 'la planilla respondió algo que no se entiende');
         }
         if (!d.ok) throw new Error(d.error || 'la planilla respondió con un error');
+        /* Si en la planilla se hizo borrón y cuenta nueva, este teléfono tiene
+           que soltar lo que quedó de antes. Si no, lo volvería a subir y los
+           registros borrados reaparecerían una y otra vez. */
+        if (d.purgadoEn) {
+          var antes = apuestas.length + movimientos.length;
+          apuestas = apuestas.filter(function (a) { return String(a.updatedAt || '') > d.purgadoEn; });
+          movimientos = movimientos.filter(function (m) { return String(m.updatedAt || '') > d.purgadoEn; });
+          if (antes !== apuestas.length + movimientos.length) guardar();
+        }
         fusionar(apuestas, d.apuestas);
         fusionar(movimientos, d.movimientos);
         guardar();
@@ -141,6 +150,38 @@
   function estadoSync(txt) {
     var el = document.getElementById('estadoSync');
     if (el) el.textContent = txt;
+  }
+
+  /**
+   * Borrón y cuenta nueva: vacía este teléfono Y la planilla, y deja una marca
+   * para que los otros teléfonos suelten lo suyo en vez de volver a subirlo.
+   */
+  function empezarDeCero() {
+    apuestas = []; movimientos = [];
+    guardar(); render();
+    if (!cfg.sheetUrl) {
+      estadoSync('Datos borrados en este teléfono.');
+      anunciar('Todo borrado.');
+      return Promise.resolve();
+    }
+    estadoSync('Borrando también en la planilla…');
+    return fetch(cfg.sheetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token: cfg.token || '', purgar: true })
+    })
+      .then(function (r) { return r.text(); })
+      .then(function (txt) {
+        var d = JSON.parse(txt);
+        if (!d.ok) throw new Error(d.error || 'la planilla respondió con un error');
+        guardar(); render();
+        estadoSync('Todo borrado, aquí y en la planilla. Los otros teléfonos se vacían al sincronizar.');
+        anunciar('Todo borrado.');
+      })
+      .catch(function (err) {
+        estadoSync('Se borró en este teléfono, pero no se pudo borrar la planilla (' +
+          err.message + '). Vuelve a intentarlo con «Empezar de cero».');
+      });
   }
 
   /** Lo que el lector de pantalla debe oír cuando algo cambia sin recargar. */
@@ -582,6 +623,10 @@
       '<button type="button" class="btn suave" id="btnExpCSV">Bajar CSV</button></div>' +
       '<label class="btn suave" style="margin-top:9px;cursor:pointer">Restaurar desde un respaldo' +
         '<input type="file" id="impJSON" accept=".json,application/json" hidden></label>' +
+      '<button type="button" class="btn peligro" id="btnCero" style="margin-top:14px">Empezar de cero</button>' +
+      '<div class="ayuda">Borra los boletos y los movimientos de este teléfono <b>y de la planilla</b>. ' +
+        'Los otros teléfonos se vacían solos la próxima vez que sincronicen: por eso no sirve ' +
+        'borrar las filas a mano, porque el que todavía los tenga los vuelve a subir.</div>' +
     '</div>';
 
     document.getElementById('caja').innerHTML = s;
@@ -645,6 +690,15 @@
     if (bc) bc.addEventListener('click', exportarCSV);
     var ij = document.getElementById('impJSON');
     if (ij) ij.addEventListener('change', importarJSON);
+    var bc = document.getElementById('btnCero');
+    if (bc) bc.addEventListener('click', function () {
+      var n = vivas().length + vivosMov().length;
+      if (!n) { alert('Ya no hay nada guardado.'); return; }
+      if (!confirm('Se van a borrar ' + n + ' registros de este teléfono y de la planilla.\n\n' +
+                   'No se puede deshacer. ¿Seguro?')) return;
+      if (!confirm('Última confirmación: ¿borrar todo?')) return;
+      empezarDeCero();
+    });
   }
 
   /* ====================== respaldos ====================== */
@@ -751,6 +805,7 @@
     guardarBoleto: guardarBoleto, borrarBoleto: borrarBoleto,
     guardarMov: guardarMov, borrarMov: borrarMov,
     render: render, irA: irA, sincronizar: sincronizar, guardarCfg: guardarCfg,
+    empezarDeCero: empezarDeCero,
     anunciar: anunciar,
     hoyISO: hoyISO, ahoraHora: ahoraHora, nuevoId: nuevoId,
     fechaCorta: fechaCorta, nomMes: nomMes, mesCorto: mesCorto, ordenFecha: ordenFecha,

@@ -1,4 +1,4 @@
-# ⚽ El Embajador
+# ⚽ La arepa veneca ctm
 
 Registro de apuestas deportivas en **BetPlay** (Colombia) para llevar la cuenta de
 verdad: los boletos, la caja en **pesos y euros**, y las métricas que la plataforma
