@@ -114,7 +114,13 @@ function escribir_(def, lista) {
     return def.cols.map(function (k) {
       if (def.bools.indexOf(k) >= 0) return e[k] ? 'SI' : '';
       var v = e[k];
-      return (v === null || v === undefined) ? '' : v;
+      if (v === null || v === undefined) return '';
+      /* Una nota que empiece por = + - @ la toma Sheets como fórmula y la
+         guarda rota (#ERROR!). El formato de texto no lo impide: hay que
+         anteponerle un apóstrofo, que Sheets usa como marca de "esto es texto"
+         y no devuelve al leer. */
+      if (typeof v === 'string' && /^[=+\-@']/.test(v)) return "'" + v;
+      return v;
     });
   });
   h.getRange(2, 1, filas.length, def.cols.length).setValues(filas);
