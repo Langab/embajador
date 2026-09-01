@@ -15,6 +15,12 @@
   var CLAVE_M = 'emb_movimientos_v1';
   var CLAVE_C = 'emb_cfg_v1';
 
+  /* La planilla queda conectada de fábrica, para no tener que pegar la
+     dirección en cada teléfono. Se puede cambiar en Caja → Planilla de Google. */
+  var PLANILLA_POR_DEFECTO =
+    'https://script.google.com/macros/s/' +
+    'AKfycbzbEZOiIXFgmUzbbdgPlExEx9rjh65L1wWgVxv8_nZHV0ot4svNKFhQWHJrlJwGmandiA/exec';
+
   var apuestas = [];
   var movimientos = [];
   var cfg = {};
@@ -50,6 +56,9 @@
   var vivas = function () { return apuestas.filter(function (a) { return !a.deleted; }); };
   var vivosMov = function () { return movimientos.filter(function (m) { return !m.deleted; }); };
 
+  /** Un boleto sin formato anotado es una sencilla. Mismo criterio en toda la app. */
+  var esSimple = function (b) { return !b.tipoBoleto || b.tipoBoleto === 'simple'; };
+
   /* ====================== almacenamiento ====================== */
   function cargar() {
     try { apuestas = JSON.parse(localStorage.getItem(CLAVE_A) || '[]'); } catch (e) { apuestas = []; }
@@ -57,6 +66,8 @@
     try { cfg = JSON.parse(localStorage.getItem(CLAVE_C) || '{}'); } catch (e) { cfg = {}; }
     if (!Array.isArray(apuestas)) apuestas = [];
     if (!Array.isArray(movimientos)) movimientos = [];
+    // solo la primera vez: si algún día la borra a propósito, se respeta
+    if (cfg.sheetUrl === undefined) { cfg.sheetUrl = PLANILLA_POR_DEFECTO; guardarCfg(); }
     C.cargarTasa();
   }
   function guardar() {
@@ -92,8 +103,18 @@
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ token: cfg.token || '', apuestas: apuestas, movimientos: movimientos })
     })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
+      .then(function (r) { return r.text(); })
+      .then(function (txt) {
+        var d;
+        try { d = JSON.parse(txt); }
+        catch (e) {
+          /* Cuando la implementación no está abierta a cualquier persona, Apps
+             Script devuelve la pantalla de acceso de Google, que es HTML. */
+          throw new Error(/<(!doctype|html)/i.test(txt)
+            ? 'la planilla pide iniciar sesión. En Apps Script: Implementar → Gestionar ' +
+              'implementaciones → editar → «Quién tiene acceso: Cualquier persona»'
+            : 'la planilla respondió algo que no se entiende');
+        }
         if (!d.ok) throw new Error(d.error || 'la planilla respondió con un error');
         fusionar(apuestas, d.apuestas);
         fusionar(movimientos, d.movimientos);
@@ -103,7 +124,17 @@
         estadoSync('Sincronizado a las ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }));
       })
       .catch(function (err) {
-        estadoSync('No se pudo conectar con la planilla (' + err.message + '). Lo que anotaste quedó guardado en este teléfono.');
+        /* Un fallo de red y un bloqueo por permisos se ven igual desde aquí: si
+           la implementación no está abierta a «Cualquier persona», Google
+           responde con una redirección al login que el navegador bloquea por
+           CORS, y fetch falla sin más detalle. Se nombran las dos causas. */
+        var esRed = err instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(err.message);
+        estadoSync(esRed
+          ? 'No se pudo conectar con la planilla. Puede ser que no haya internet, o que la ' +
+            'implementación no esté abierta: en Apps Script, Implementar → Gestionar ' +
+            'implementaciones → editar (lápiz) → «Quién tiene acceso: Cualquier persona». ' +
+            'Mientras tanto, lo que anotes queda guardado en este teléfono.'
+          : 'No se pudo sincronizar (' + err.message + '). Lo que anotaste quedó guardado en este teléfono.');
       })
       .then(function () { sincronizando = false; });
   }
@@ -112,8 +143,17 @@
     if (el) el.textContent = txt;
   }
 
+  /** Lo que el lector de pantalla debe oír cuando algo cambia sin recargar. */
+  function anunciar(txt) {
+    var el = document.getElementById('aviso');
+    if (!el) return;
+    el.textContent = '';
+    setTimeout(function () { el.textContent = txt; }, 60);
+  }
+
   /* ====================== alta y baja de registros ====================== */
   function guardarBoleto(b) {
+    var nuevo = !b.id;
     b.updatedAt = new Date().toISOString();
     if (!b.id) { b.id = nuevoId(); apuestas.push(b); }
     else {
@@ -121,14 +161,17 @@
       if (i >= 0) apuestas[i] = b; else apuestas.push(b);
     }
     guardar(); render(); sincronizar(true);
+    anunciar(nuevo ? 'Boleto anotado.' : 'Boleto actualizado.');
   }
   function borrarBoleto(id) {
     var a = apuestas.find(function (x) { return x.id === id; });
     if (!a) return;
     a.deleted = true; a.updatedAt = new Date().toISOString();
     guardar(); render(); sincronizar(true);
+    anunciar('Boleto borrado.');
   }
   function guardarMov(m) {
+    var nuevo = !m.id;
     m.updatedAt = new Date().toISOString();
     if (!m.id) { m.id = nuevoId(); movimientos.push(m); }
     else {
@@ -136,12 +179,14 @@
       if (i >= 0) movimientos[i] = m; else movimientos.push(m);
     }
     guardar(); render(); sincronizar(true);
+    anunciar(nuevo ? 'Movimiento anotado.' : 'Movimiento actualizado.');
   }
   function borrarMov(id) {
     var m = movimientos.find(function (x) { return x.id === id; });
     if (!m) return;
     m.deleted = true; m.updatedAt = new Date().toISOString();
     guardar(); render(); sincronizar(true);
+    anunciar('Movimiento borrado.');
   }
 
   /* ====================== navegación ====================== */
@@ -175,13 +220,26 @@
     var nomMercado = mercado ? mercado.n : (b.mercado || 'Apuesta');
     var esCombi = b.tipoBoleto && b.tipoBoleto !== 'simple';
 
+    /* La tarjeta es una sola parada para el lector de pantalla, así que su
+       etiqueta tiene que contener lo mismo que se ve: sin esto solo se leían
+       los equipos y el estado, y la cuota, la inversión y el resultado en plata
+       —o sea, el boleto entero— no se anunciaban. */
+    var voz = (b.equipoLocal || 'Boleto') +
+      (b.equipoVisita ? ' contra ' + b.equipoVisita : '') +
+      '. ' + nomMercado + (b.seleccion ? ': ' + b.seleccion : '') +
+      (b.linea != null && b.linea !== '' ? ' ' + b.linea : '') +
+      '. Cuota ' + C.fmtCuota(b.cuota) + ', invertido ' + C.fmtCOP(b.stake) + '. ' +
+      (NOMBRE_ESTADO[b.resultado] || 'Pendiente') +
+      (pend ? '' : ', ' + C.fmtCOPsigno(g)) + '. Tocar para editar.';
     var s = '<article class="boleto tocable" data-boleto="' + esc(b.id) + '" tabindex="0" role="button" ' +
-            'aria-label="' + esc((b.equipoLocal || 'Boleto') + ' contra ' + (b.equipoVisita || '') + ', ' + (NOMBRE_ESTADO[b.resultado] || '')) + '">';
+            'aria-label="' + esc(voz) + '">';
     s += '<div class="boleto-cuerpo">';
     s += '<span class="sello ' + esc(b.resultado || 'pendiente') + '">' + esc(NOMBRE_ESTADO[b.resultado] || 'Pendiente') + '</span>';
 
     // fecha, liga y etiquetas
-    s += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px;padding-right:88px">';
+    /* El hueco del sello se reserva en em, no en px: el sello crece con el
+       tamaño de letra, y con el texto al 200% tapaba la fecha. */
+    s += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px;padding-right:7em">';
     s += '<span style="font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-suave)">' +
          esc(fechaCorta(b.fecha)) + (b.hora ? ' · ' + esc(b.hora) : '') + '</span>';
     if (b.liga && D.LIGAS[b.liga]) {
@@ -319,9 +377,12 @@
     var acum = 0;
     return ord.map(function (b) {
       acum += C.ganancia(b);
+      /* Lo que entra en `meta` acaba en el innerHTML del globo de ayuda, así que
+         tiene que salir de aquí ya escapado: el atributo data-tip se decodifica
+         al leerlo y deshace cualquier escape posterior. */
       return {
         x: fechaCorta(b.fecha), v: acum,
-        meta: (b.equipoLocal || '') + (b.equipoVisita ? ' vs ' + b.equipoVisita : '') +
+        meta: esc(b.equipoLocal || '') + (b.equipoVisita ? ' vs ' + esc(b.equipoVisita) : '') +
               '<br>' + C.fmtCOPsigno(C.ganancia(b)) + ' en este boleto'
       };
     });
@@ -351,8 +412,9 @@
         if (filtros.estado === 'pendiente' ? !C.estaPendiente(b) : b.resultado !== filtros.estado) return false;
       }
       if (filtros.liga !== 'todas' && b.liga !== filtros.liga) return false;
-      if (filtros.tipo === 'simple' && b.tipoBoleto !== 'simple') return false;
-      if (filtros.tipo === 'combinada' && b.tipoBoleto === 'simple') return false;
+      // un boleto sin formato anotado cuenta como sencilla, igual que en el análisis
+      if (filtros.tipo === 'simple' && !esSimple(b)) return false;
+      if (filtros.tipo === 'combinada' && esSimple(b)) return false;
       if (filtros.tipo === 'envivo' && !b.enVivo) return false;
       return true;
     }).sort(ordenFecha).reverse();
@@ -461,7 +523,7 @@
       s += '<div class="aviso ojo" style="margin-top:10px"><span class="ico">🧾</span><span>' +
         '<strong>' + retGrandes + ' retiro' + (retGrandes === 1 ? '' : 's') + ' por encima del umbral</strong>' +
         'Retención estimada: ' + C.fmtCOP(retenido) + ' (' + C.fmtEUR(C.copAEur(retenido)) + '). ' +
-        'Sacar la plata en varios retiros por debajo del umbral evita la retención.</span></div>';
+        'Se aplica sobre el monto bruto del retiro, sin descontar lo que apostaste.</span></div>';
     } else {
       s += '<div class="ayuda" style="margin-top:8px">Ninguno de tus retiros ha superado el umbral, ' +
         'así que no deberías haber tenido retención.</div>';
@@ -661,6 +723,7 @@
     document.getElementById(id).addEventListener('change', function (e) {
       filtros[id.slice(1).toLowerCase()] = e.target.value;
       renderBoletos();
+      anunciar(document.querySelectorAll('#listaBoletos .boleto').length + ' boletos con estos filtros.');
     });
   });
   document.getElementById('aPeriodo').addEventListener('change', function (e) {
@@ -687,7 +750,8 @@
     vivas: vivas, vivosMov: vivosMov,
     guardarBoleto: guardarBoleto, borrarBoleto: borrarBoleto,
     guardarMov: guardarMov, borrarMov: borrarMov,
-    render: render, irA: irA, sincronizar: sincronizar,
+    render: render, irA: irA, sincronizar: sincronizar, guardarCfg: guardarCfg,
+    anunciar: anunciar,
     hoyISO: hoyISO, ahoraHora: ahoraHora, nuevoId: nuevoId,
     fechaCorta: fechaCorta, nomMes: nomMes, mesCorto: mesCorto, ordenFecha: ordenFecha,
     NOMBRE_ESTADO: NOMBRE_ESTADO, ficha: ficha, boletoHTML: boletoHTML, serieCaja: serieCaja,

@@ -83,14 +83,26 @@
       ? suma(res.map(function (b) { return acerto(b) ? C.invertido(b) : 0; })) / turnover
       : 0;
 
-    // retornos por peso apostado: la base del test de significancia
-    var r = res.filter(function (b) { return C.invertido(b) > 0; })
-               .map(function (b) { return C.ganancia(b) / C.invertido(b); });
-    var m = media(r), sd = desvest(r);
-    var err = r.length > 1 ? sd / Math.sqrt(r.length) : 0;
+    /* Margen de error DE LA RENTABILIDAD, que es un cociente entre dos sumas
+       (ganancia total / invertido total), no el promedio de los boletos. Si se
+       usara el promedio simple, con montos desiguales las dos cifras se
+       despegan: la rentabilidad puede salir +97% y su intervalo caer entero en
+       negativo. Se calcula como error de una razón. */
+    var y = turnover > 0 ? neto / turnover : 0;
+    var sc = suma(res.map(function (b) {
+      var d = C.ganancia(b) - y * C.invertido(b);
+      return d * d;
+    }));
+    var err = (turnover > 0 && n > 1) ? Math.sqrt(sc) / turnover : 0;
+
+    /* Las apuestas gratis suman a la ganancia pero no al invertido, así que no
+       pueden decidir si hay muestra suficiente: lo que sostiene la rentabilidad
+       son los boletos que sí arriesgaron plata. */
+    var nArriesgados = res.filter(function (b) { return C.invertido(b) > 0; }).length;
 
     return {
       n: n,
+      nArriesgados: nArriesgados,
       turnover: turnover,
       neto: neto,
       yield: turnover > 0 ? neto / turnover * 100 : 0,
@@ -102,11 +114,11 @@
       cuotaPonderada: turnover > 0
         ? suma(res.map(function (b) { return (+b.cuota || 0) * C.invertido(b); })) / turnover : 0,
       stakeMedio: n ? turnover / n : 0,
-      ic95: [(m - 1.96 * err) * 100, (m + 1.96 * err) * 100],
-      t: err > 0 ? m / err : 0,
-      p: err > 0 ? colaNormal(m / err) : 1,
-      fiable: n >= MIN_FIABLE,
-      mostrable: n >= MIN_MOSTRAR
+      ic95: [(y - 1.96 * err) * 100, (y + 1.96 * err) * 100],
+      t: err > 0 ? y / err : 0,
+      p: err > 0 ? colaNormal(y / err) : 1,
+      fiable: nArriesgados >= MIN_FIABLE,
+      mostrable: nArriesgados >= MIN_MOSTRAR && turnover > 0
     };
   }
 
@@ -157,7 +169,7 @@
     { et: '1,51–2,00', min: 1.50, max: 2.00 },
     { et: '2,01–3,00', min: 2.00, max: 3.00 },
     { et: '3,01–5,00', min: 3.00, max: 5.00 },
-    { et: '5,00+',     min: 5.00, max: Infinity }
+    { et: '5,01+',     min: 5.00, max: Infinity }
   ];
   function porCuota(boletos) {
     return CUBOS_CUOTA.map(function (c) {
@@ -186,8 +198,19 @@
     for (var s = 0; s < sims; s++) {
       var acc = 0, camino = [];
       for (var i = 0; i < res.length; i++) {
-        var b = res[i], st = C.invertido(b), q = +b.cuota || 1;
-        acc += (Math.random() < 1 / q) ? st * (q - 1) : -st;
+        var b = res[i], q = +b.cuota || 1;
+        var gana = Math.random() < 1 / q;
+        /* Cada boleto simulado tiene que poder ganar y perder lo mismo que el
+           real. Una apuesta gratis no resta cuando falla, y una parcial de
+           hándicap asiático mueve media apuesta: simularlas como un boleto
+           normal descuadraba la banda contra la curva que se le compara. */
+        if (b.freebet) {
+          acc += gana ? (Number(b.stake) || 0) * (q - 1) : 0;
+        } else {
+          var parcial = b.resultado === 'media_ganada' || b.resultado === 'media_perdida';
+          var base = C.invertido(b) / (parcial ? 2 : 1);
+          acc += gana ? base * (q - 1) : -base;
+        }
         camino.push(acc);
       }
       caminos.push(camino);
@@ -270,7 +293,7 @@
       var dentro = boletos.filter(filtro);
       var fuera = boletos.filter(function (b) { return !filtro(b); });
       var a = resumen(dentro), b = resumen(fuera);
-      if (a.n < MIN_MOSTRAR || b.n < MIN_MOSTRAR || !a.turnover) return;
+      if (!a.mostrable || !b.mostrable || !a.turnover) return;
       var coste = a.turnover * (b.yield - a.yield) / 100;
       if (coste > 0) lista.push({ et: nombre, v: -coste, n: a.n, detalle: detalle(a, b) });
     }
@@ -311,14 +334,14 @@
   /* ====================== presentación ====================== */
 
   function selloMuestra(m) {
-    if (m.n < MIN_MOSTRAR) return '<span style="color:var(--tinta-suave);font-weight:700">pocos datos</span>';
+    if (!m.mostrable) return '<span style="color:var(--tinta-suave);font-weight:700">pocos datos</span>';
     var t = m.n + ' boleto' + (m.n === 1 ? '' : 's');
     if (m.n < MIN_FIABLE) t += ' · muestra corta';
     return esc(t);
   }
 
   function celdaYield(m) {
-    if (m.n < MIN_MOSTRAR) return '—';
+    if (!m.mostrable) return '—';
     return C.fmtPct(m.yield);
   }
 
@@ -332,7 +355,7 @@
     var out = [];
     var m = resumen(resueltos);
 
-    if (m.n >= MIN_MOSTRAR) {
+    if (m.mostrable) {
       // ¿lo que ve es habilidad o es azar?
       var dentroDelAzar = m.ic95[0] < 0 && m.ic95[1] > 0;
       if (m.yield > 0 && dentroDelAzar) {
@@ -405,8 +428,14 @@
       var d = new Date(); d.setDate(d.getDate() - parseInt(periodo, 10));
       desde = d.toISOString().slice(0, 10);
     }
-    var enRango = todas.filter(function (b) { return !desde || (b.fecha || '') >= desde; });
-    var conB = conBankroll(enRango, movs);
+    /* La caja se reconstruye con el historial COMPLETO y se filtra después. Al
+       revés, el período ignoraría todo lo ganado o perdido antes de la ventana
+       y la caja saldría inflada: el mismo boleto parecería el 2% de la banca en
+       vez del 11%, que es justo el error que hace parecer disciplinado a quien
+       no lo está. */
+    var conB = conBankroll(todas, movs).filter(function (b) {
+      return !desde || (b.fecha || '') >= desde;
+    });
     var res = conB.filter(C.estaResuelto).filter(function (b) { return b.resultado !== 'anulada'; });
 
     if (res.length < 3) {
@@ -461,13 +490,13 @@
     var cuerpo =
       '<div class="fichas" style="margin-bottom:10px">' +
         global.APP.ficha('Rentabilidad', celdaYield(m), 'por cada peso apostado',
-          m.n < MIN_MOSTRAR ? '' : (m.yield > 0 ? 'pos' : m.yield < 0 ? 'neg' : '')) +
+          !m.mostrable ? '' : (m.yield > 0 ? 'pos' : m.yield < 0 ? 'neg' : '')) +
         global.APP.ficha('Ganancia neta', C.fmtCOPsigno(m.neto, true), C.fmtEURsigno(C.copAEur(m.neto)),
           m.neto > 0 ? 'pos' : m.neto < 0 ? 'neg' : '') +
         global.APP.ficha('Apostado', C.fmtCOP(m.turnover, true), m.n + ' boletos resueltos') +
       '</div>';
 
-    if (m.n >= MIN_MOSTRAR) {
+    if (m.mostrable) {
       cuerpo += '<table class="tabla-datos">' +
         '<tr><th scope="row">Margen de error (95%)</th><td>' + C.fmtPct(m.ic95[0]) + ' a ' + C.fmtPct(m.ic95[1]) + '</td></tr>' +
         '<tr><th scope="row">Boletos acertados</th><td>' + Math.round(m.tasaAcierto * 100) + '%</td></tr>' +
@@ -501,7 +530,10 @@
         'Simulando tu mismo historial sin ninguna ventaja, el 90% de los resultados caería entre ' +
         C.fmtCOPsigno(b.p5) + ' y ' + C.fmtCOPsigno(b.p95) + '. Tú vas en ' + C.fmtCOPsigno(fin) + '.');
     }
-    return tarjeta('Cómo evolucionó tu plata', cuerpo);
+    return tarjeta('Cómo evolucionó tu plata', cuerpo,
+      banda ? 'La simulación repite tus mismos boletos, con las mismas cuotas y montos, ' +
+              'suponiendo que aciertas exactamente lo que dice la cuota. Es una vara exigente: ' +
+              'un apostador sin ventaja rinde algo peor que eso, porque la casa se queda con su parte.' : '');
   }
 
   function bloqueCostes(res) {
@@ -525,14 +557,14 @@
   function bloqueCuotas(res) {
     var cubos = porCuota(res).filter(function (c) { return c.n > 0; });
     if (!cubos.length) return '';
-    var conDatos = cubos.filter(function (c) { return c.n >= MIN_MOSTRAR; });
+    var conDatos = cubos.filter(function (c) { return c.mostrable; });
     var cuerpo = G.barrasH(cubos.map(function (c) {
       return {
         et: c.clave,
-        v: c.n >= MIN_MOSTRAR ? c.yield : 0,
-        color: c.n < MIN_MOSTRAR ? 'var(--nulo)' : undefined,
+        v: c.mostrable ? c.yield : 0,
+        color: !c.mostrable ? 'var(--nulo)' : undefined,
         tip: '<b>Cuota ' + esc(c.clave) + '</b><br>' + c.n + ' boletos · ' + C.fmtCOP(c.turnover) + ' apostados<br>' +
-             (c.n >= MIN_MOSTRAR ? 'Rentabilidad ' + C.fmtPct(c.yield) + '<br>' + C.fmtCOPsigno(c.neto) : 'Pocos datos para calcular rentabilidad')
+             (c.mostrable ? 'Rentabilidad ' + C.fmtPct(c.yield) + '<br>' + C.fmtCOPsigno(c.neto) : 'Pocos datos para calcular rentabilidad')
       };
     }), { fmt: function (v) { return v === 0 ? '—' : C.fmtPct(v, 0); } });
 
@@ -542,8 +574,8 @@
       }), 'Ver la tabla por cuota');
 
     // el sesgo hacia las cuotas altas: el patrón más repetido en apostadores
-    var altas = conDatos.filter(function (c) { return c.clave === '3,01–5,00' || c.clave === '5,00+'; });
-    var bajas = conDatos.filter(function (c) { return c.clave !== '3,01–5,00' && c.clave !== '5,00+'; });
+    var altas = conDatos.filter(function (c) { return c.clave === '3,01–5,00' || c.clave === '5,01+'; });
+    var bajas = conDatos.filter(function (c) { return c.clave !== '3,01–5,00' && c.clave !== '5,01+'; });
     if (altas.length && bajas.length) {
       var tA = suma(altas.map(function (c) { return c.turnover; }));
       var nA = suma(altas.map(function (c) { return c.neto; }));
@@ -601,7 +633,7 @@
         v: c.neto,
         color: 'var(--cat-' + ((i % 6) + 1) + ')',
         tip: '<b>' + esc(nombre(c.clave)) + '</b><br>' + c.n + ' boletos · ' + C.fmtCOP(c.turnover) + ' apostados<br>' +
-             C.fmtCOPsigno(c.neto) + (c.n >= MIN_MOSTRAR ? '<br>Rentabilidad ' + C.fmtPct(c.yield) : '<br>Pocos datos')
+             C.fmtCOPsigno(c.neto) + (c.mostrable ? '<br>Rentabilidad ' + C.fmtPct(c.yield) : '<br>Pocos datos')
       };
     }), { fmt: function (v) { return C.fmtCOP(v, true); } });
     cuerpo += G.tabla([titulo.replace('Por ', ''), 'N.º', 'Apostado', 'Result.', 'Rent.'],

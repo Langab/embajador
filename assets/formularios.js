@@ -25,7 +25,44 @@
     ['media_ganada', 'Ganada parcial'], ['media_perdida', 'Perdida parcial']
   ];
 
-  /* ====================== abrir y cerrar ====================== */
+  /* ====================== abrir y cerrar ======================
+     La hoja dice aria-modal, así que tiene que comportarse como tal: el foco
+     entra al abrir, el fondo deja de ser alcanzable, Escape cierra, y al cerrar
+     el foco vuelve de donde vino. */
+  var ultimoFoco = null;
+
+  function abrirHoja(telonEl, titulo) {
+    ultimoFoco = document.activeElement;
+    telonEl.classList.add('abierto');
+    document.body.style.overflow = 'hidden';
+    fondoInerte(true);
+    var h2 = telonEl.querySelector('.hoja-barra h2');
+    if (h2) { h2.setAttribute('tabindex', '-1'); h2.focus(); }
+  }
+  function cerrarHoja(telonEl) {
+    telonEl.classList.remove('abierto');
+    document.body.style.overflow = '';
+    fondoInerte(false);
+    if (ultimoFoco && document.contains(ultimoFoco)) ultimoFoco.focus();
+    ultimoFoco = null;
+  }
+  function fondoInerte(si) {
+    ['main', 'nav', 'header'].forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      if ('inert' in el) el.inert = si;
+      else if (si) el.setAttribute('aria-hidden', 'true');
+      else el.removeAttribute('aria-hidden');
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var abierto = document.querySelector('.telon.abierto');
+    if (!abierto) return;
+    e.preventDefault();
+    cerrarHoja(abierto);
+  });
+
   function abrirBoleto(id) {
     var b = id ? A.vivas().find(function (x) { return x.id === id; }) : null;
     borrador = b ? JSON.parse(JSON.stringify(b)) : {
@@ -35,13 +72,9 @@
     };
     document.getElementById('tituloHoja').textContent = b ? 'Editar boleto' : 'Nuevo boleto';
     pintarForm();
-    telon.classList.add('abierto');
-    document.body.style.overflow = 'hidden';
+    abrirHoja(telon);
   }
-  function cerrarBoleto() {
-    telon.classList.remove('abierto');
-    document.body.style.overflow = '';
-  }
+  function cerrarBoleto() { cerrarHoja(telon); }
   document.getElementById('cerrarBoleto').addEventListener('click', cerrarBoleto);
   telon.addEventListener('click', function (e) { if (e.target === telon) cerrarBoleto(); });
 
@@ -107,7 +140,7 @@
         'placeholder="0" value="' + esc(valorVisible(b)) + '">') +
     '</div>';
 
-    s += '<div class="segmentos chico" style="margin:-4px 0 11px" role="group" aria-label="Moneda de la inversión">' +
+    s += '<div class="segmentos chico" style="margin:-4px 0 11px" role="radiogroup" aria-label="Moneda de la inversión">' +
       botonSeg('moneda', 'COP', 'Pesos', b.moneda !== 'EUR') +
       botonSeg('moneda', 'EUR', 'Euros', b.moneda === 'EUR') +
     '</div>';
@@ -116,7 +149,7 @@
     s += '<div id="previa"></div>';
 
     /* --- formato del boleto --- */
-    s += campo('Formato', '<div class="segmentos" role="group" aria-label="Formato del boleto">' +
+    s += campo('Formato', '<div class="segmentos" role="radiogroup" aria-label="Formato del boleto">' +
       botonSeg('tipoBoleto', 'simple', 'Sencilla', (b.tipoBoleto || 'simple') === 'simple') +
       botonSeg('tipoBoleto', 'combinada', 'Combinada', b.tipoBoleto === 'combinada') +
       botonSeg('tipoBoleto', 'sistema', 'Sistema', b.tipoBoleto === 'sistema') +
@@ -135,7 +168,7 @@
     '</div>';
 
     /* --- cómo terminó --- */
-    s += campo('Resultado', '<div class="segmentos chico" role="group" aria-label="Resultado del boleto">' +
+    s += campo('Resultado', '<div class="segmentos chico" role="radiogroup" aria-label="Resultado del boleto">' +
       ESTADOS.map(function (e) {
         return botonSeg('resultado', e[0], e[1], (b.resultado || 'pendiente') === e[0]);
       }).join('') + '</div>');
@@ -166,10 +199,16 @@
   function campo(etiqueta, control) {
     return '<label class="campo"><span>' + esc(etiqueta) + '</span>' + control + '</label>';
   }
+  /* Un grupo donde solo una opción puede estar activa es un grupo de radios, no
+     una fila de interruptores: así se anuncia "Ganada, 3 de 7" en vez de
+     "botón de alternancia, no pulsado". Los de "En vivo" y "Apuesta gratis" sí
+     son interruptores independientes y conservan aria-pressed. */
   function botonSeg(campoNom, valor, texto, activo, alterna) {
+    var estado = alterna
+      ? ' aria-pressed="' + (activo ? 'true' : 'false') + '"'
+      : ' role="radio" aria-checked="' + (activo ? 'true' : 'false') + '"';
     return '<button type="button" data-campo="' + esc(campoNom) + '" data-valor="' + esc(valor) + '"' +
-      (alterna ? ' data-alterna="1"' : '') + ' aria-pressed="' + (activo ? 'true' : 'false') + '">' +
-      esc(texto) + '</button>';
+      (alterna ? ' data-alterna="1"' : '') + estado + '>' + esc(texto) + '</button>';
   }
 
   /** El control de "a qué le apostaste" cambia según el mercado. */
@@ -190,7 +229,7 @@
         esc(b.seleccion || '') + '">';
     }
     var enLista = opciones.indexOf(b.seleccion) >= 0;
-    return '<div class="segmentos chico" role="group" aria-label="Selección">' +
+    return '<div class="segmentos chico" role="radiogroup" aria-label="Selección">' +
       opciones.map(function (o) { return botonSeg('seleccion', o, o, b.seleccion === o); }).join('') +
       '</div>' +
       '<input type="text" name="seleccion" placeholder="…u otra cosa" autocomplete="off" style="margin-top:6px" value="' +
@@ -215,8 +254,14 @@
         var c = btn.dataset.campo, v = btn.dataset.valor;
         if (btn.dataset.alterna) borrador[c] = borrador[c] ? false : true;
         else borrador[c] = v;
-        if (c === 'moneda' || c === 'resultado' || c === 'tipoBoleto') pintarForm();
-        else { pintarBotones(c); pintarPrevia(); }
+        if (c === 'moneda' || c === 'resultado' || c === 'tipoBoleto') {
+          /* pintarForm() rehace el HTML entero, así que el botón recién pulsado
+             deja de existir y el foco se cae al body. Se recupera el equivalente. */
+          pintarForm();
+          var eq = form.querySelector('button[data-campo="' + c + '"][data-valor="' +
+                                      String(v).replace(/"/g, '\\"') + '"]');
+          if (eq) eq.focus();
+        } else { pintarBotones(c); pintarPrevia(); }
       });
     });
     var bb = document.getElementById('btnBorrar');
@@ -230,7 +275,7 @@
   function pintarBotones(campoNom) {
     form.querySelectorAll('button[data-campo="' + campoNom + '"]').forEach(function (b) {
       var act = b.dataset.alterna ? !!borrador[campoNom] : borrador[campoNom] === b.dataset.valor;
-      b.setAttribute('aria-pressed', act ? 'true' : 'false');
+      b.setAttribute(b.dataset.alterna ? 'aria-pressed' : 'aria-checked', act ? 'true' : 'false');
     });
   }
 
@@ -238,23 +283,59 @@
     var n = el.name, v = el.value;
     if (n === 'stakeVis') {
       var num = parseFloat(v);
+      /* La tasa se fija UNA sola vez, al crear el boleto, y no se vuelve a
+         tocar. Si se refrescara al editar, abrir un boleto de marzo en
+         septiembre le cambiaría su valor en euros; y peor, en modo euros le
+         cambiaría los pesos, moviendo un monto histórico sin que nadie
+         escribiera un número distinto. */
+      if (!borrador.tasaEurCop) borrador.tasaEurCop = C.tasa();
       if (isNaN(num)) { borrador.stake = null; }
       else if (borrador.moneda === 'EUR') {
-        borrador.tasaEurCop = C.tasa();
-        borrador.stake = Math.round(C.eurACop(num));
+        borrador.stake = Math.round(C.eurACop(num, borrador.tasaEurCop));
       } else {
         borrador.stake = Math.round(num);
-        borrador.tasaEurCop = C.tasa();
       }
     } else if (n === 'cuota' || n === 'linea' || n === 'retorno' || n === 'numSelecciones') {
       borrador[n] = v === '' ? null : parseFloat(v);
+    } else if (n === 'equipoLocal' || n === 'equipoVisita') {
+      /* Si la selección era el nombre del equipo, sigue al equipo cuando se
+         corrige. Si no, el vínculo se rompía en silencio: el boleto dejaba de
+         resaltar el lado elegido y desaparecía del análisis por equipo. */
+      var antes = borrador[n];
+      borrador[n] = v;
+      if (antes && borrador.seleccion === antes) borrador.seleccion = v;
     } else {
       borrador[n] = v;
     }
+
     if (n === 'liga') pintarForm();
-    else if (n === 'mercado') pintarForm();
-    else if (n === 'equipoLocal' || n === 'equipoVisita') { pintarPrevia(); }
-    else pintarPrevia();
+    else if (n === 'mercado') {
+      /* Al cambiar de mercado, lo del mercado anterior deja de tener sentido:
+         una línea de 2,5 goles guardada en un 1X2, o un "Más de" donde ahora
+         hay que elegir equipo. El campo desaparecía de la pantalla pero el
+         dato se guardaba igual. */
+      var nuevo = D.MERCADOS_POR_CLAVE[borrador.mercado];
+      if (!nuevo || !nuevo.linea) borrador.linea = null;
+      borrador.seleccion = '';
+      pintarForm();
+    } else if (n === 'equipoLocal' || n === 'equipoVisita') {
+      /* Los botones de selección llevan el nombre del equipo, así que hay que
+         redibujarlos; si no, se quedan diciendo "Local" y eso es lo que guardan. */
+      var m = D.MERCADOS_POR_CLAVE[borrador.mercado];
+      var usaEquipos = m && m.opciones && m.opciones.some(function (o) {
+        return String(o).charAt(0) === '@';
+      });
+      if (usaEquipos) { pintarForm(); enfocar(n); } else pintarPrevia();
+    } else pintarPrevia();
+  }
+
+  /** Devuelve el cursor al campo que se estaba escribiendo tras redibujar. */
+  function enfocar(nombre) {
+    var el = form.querySelector('[name="' + nombre + '"]');
+    if (!el) return;
+    var fin = el.value.length;
+    el.focus();
+    try { el.setSelectionRange(fin, fin); } catch (e) { /* algunos tipos no lo permiten */ }
   }
 
   /** La previa: cuánto se juega y cuánto se lleva, en pesos y en euros. */
@@ -288,19 +369,31 @@
     el.innerHTML = s;
   }
 
+  /** Avisa del error Y deja el cursor en el campo que hay que arreglar. */
+  function falla(mensaje, campo) {
+    form.querySelectorAll('[aria-invalid]').forEach(function (el) {
+      el.removeAttribute('aria-invalid');
+    });
+    var el = form.querySelector('[name="' + campo + '"]');
+    if (el) el.setAttribute('aria-invalid', 'true');
+    alert(mensaje);
+    if (el) el.focus();
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var b = borrador;
-    if (!b.fecha) { alert('Ponle fecha al boleto.'); return; }
-    if (!(+b.cuota > 1)) { alert('La cuota tiene que ser mayor que 1.'); return; }
-    if (!(+b.stake > 0)) { alert('Anota cuánto invertiste.'); return; }
+    if (!b.fecha) { falla('Ponle fecha al boleto.', 'fecha'); return; }
+    if (!(+b.cuota > 1)) { falla('La cuota tiene que ser mayor que 1.', 'cuota'); return; }
+    if (!(+b.stake > 0)) { falla('Anota cuánto invertiste.', 'stakeVis'); return; }
     if (b.resultado === 'cashout' && !(+b.retorno >= 0)) {
-      alert('En un cash out hay que anotar cuánto te pagó BetPlay.'); return;
+      falla('En un cobro anticipado hay que anotar cuánto te pagó BetPlay.', 'retorno'); return;
     }
     if (!b.tasaEurCop) b.tasaEurCop = C.tasa();
     if (b.tipoBoleto === 'simple') b.numSelecciones = null;
     // recordar la última liga para el próximo boleto
     A.cfg.ultimaLiga = b.liga || '';
+    if (A.guardarCfg) A.guardarCfg();   // si no, se olvida al recargar
     A.guardarBoleto(b);
     cerrarBoleto();
   });
@@ -317,13 +410,9 @@
     };
     document.getElementById('tituloMov').textContent = m ? 'Editar movimiento' : 'Movimiento de caja';
     pintarMov();
-    telonMov.classList.add('abierto');
-    document.body.style.overflow = 'hidden';
+    abrirHoja(telonMov);
   }
-  function cerrarMov() {
-    telonMov.classList.remove('abierto');
-    document.body.style.overflow = '';
-  }
+  function cerrarMov() { cerrarHoja(telonMov); }
   document.getElementById('cerrarMov').addEventListener('click', cerrarMov);
   telonMov.addEventListener('click', function (e) { if (e.target === telonMov) cerrarMov(); });
 
@@ -357,9 +446,12 @@
       el.addEventListener(ev, function () {
         if (el.name === 'montoVis') {
           var num = parseFloat(el.value);
-          borradorMov.tasaEurCop = C.tasa();
+          // la tasa del movimiento también se congela una sola vez
+          if (!borradorMov.tasaEurCop) borradorMov.tasaEurCop = C.tasa();
           borradorMov.monto = isNaN(num) ? null
-            : (borradorMov.moneda === 'EUR' ? Math.round(C.eurACop(num)) : Math.round(num));
+            : (borradorMov.moneda === 'EUR'
+                ? Math.round(C.eurACop(num, borradorMov.tasaEurCop))
+                : Math.round(num));
         } else borradorMov[el.name] = el.value;
         previaMov();
       });
@@ -391,8 +483,15 @@
 
   formMov.addEventListener('submit', function (e) {
     e.preventDefault();
-    if (!borradorMov.fecha) { alert('Ponle fecha al movimiento.'); return; }
-    if (!(+borradorMov.monto > 0)) { alert('Anota cuánta plata fue.'); return; }
+    if (!borradorMov.fecha) {
+      var f = formMov.querySelector('[name="fecha"]'); alert('Ponle fecha al movimiento.');
+      if (f) f.focus(); return;
+    }
+    if (!(+borradorMov.monto > 0)) {
+      var mn = formMov.querySelector('[name="montoVis"]');
+      if (mn) mn.setAttribute('aria-invalid', 'true');
+      alert('Anota cuánta plata fue.'); if (mn) mn.focus(); return;
+    }
     if (!borradorMov.tasaEurCop) borradorMov.tasaEurCop = C.tasa();
     A.guardarMov(borradorMov);
     cerrarMov();

@@ -48,9 +48,12 @@ function hoja_(def) {
     h.appendRow(def.cols);
     h.setFrozenRows(1);
     h.getRange(1, 1, 1, def.cols.length).setFontWeight('bold');
-    // id y fecha como texto plano para que Sheets no los reinterprete
-    h.getRange('A2:B').setNumberFormat('@');
   }
+  /* TODA la hoja va como texto plano, y se reaplica en cada uso, no solo al
+     crearla. Si no, Sheets "ayuda": convierte "21:30" en una hora (y la
+     devuelve como fecha de 1899), y una nota que empiece por "=" la toma como
+     fórmula. Ambas cosas corrompen el dato de forma silenciosa. */
+  h.getRange(1, 1, Math.max(h.getMaxRows(), 2), def.cols.length).setNumberFormat('@');
   return h;
 }
 
@@ -62,10 +65,20 @@ function leer_(def) {
     var e = {};
     for (var j = 0; j < def.cols.length; j++) e[def.cols[j]] = vals[i][j];
     if (!e.id) continue;
+    /* Aunque la hoja vaya como texto, una fila escrita a mano o guardada por
+       una versión anterior puede traer Date. Se normaliza antes de devolverla:
+       si "hora" o "updatedAt" salieran como Date, el orden de los boletos y la
+       resolución de conflictos por fecha dejarían de funcionar. */
     if (e.fecha instanceof Date) {
       e.fecha = Utilities.formatDate(e.fecha, Session.getScriptTimeZone(), 'yyyy-MM-dd');
     } else {
       e.fecha = String(e.fecha || '');
+    }
+    if (e.hora instanceof Date) {
+      e.hora = Utilities.formatDate(e.hora, Session.getScriptTimeZone(), 'HH:mm');
+    }
+    if (e.updatedAt instanceof Date) {
+      e.updatedAt = e.updatedAt.toISOString();
     }
     def.numeros.forEach(function (k) {
       e[k] = (e[k] === '' || e[k] === null) ? null : Number(e[k]);

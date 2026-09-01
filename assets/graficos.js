@@ -15,7 +15,11 @@
     });
   };
 
-  /* --------------------- tooltip único, compartido --------------------- */
+  /* --------------------- tooltip único, compartido ---------------------
+     CONTRATO: todo lo que se ponga en un atributo `data-tip` tiene que venir ya
+     escapado por quien lo construye. El atributo se decodifica al leerlo con
+     getAttribute y su contenido va directo a innerHTML, así que un esc() puesto
+     aquí no protegería nada: lo deshace la propia lectura del atributo. */
   var tip = null;
   function verTip(html, x, y) {
     if (!tip) {
